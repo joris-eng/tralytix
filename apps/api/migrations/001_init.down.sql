@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS trade_tags;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS trades;
+DROP TABLE IF EXISTS candles;
+DROP TABLE IF EXISTS instruments;
+DROP INDEX IF EXISTS sessions_expires_at_idx;
+DROP INDEX IF EXISTS sessions_user_id_idx;
+DROP INDEX IF EXISTS sessions_token_hash_uq_idx;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS users;
