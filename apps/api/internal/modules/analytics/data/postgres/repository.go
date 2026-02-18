@@ -170,3 +170,57 @@ func toRFC3339StringPtr(v interface{}) *string {
 	s := tm.Format(time.RFC3339)
 	return &s
 }
+
+func (r *Repository) MT5EquityByAccount(ctx context.Context, accountID string) (analyticsdomain.EquityResponse, error) {
+	uid, err := uuid.Parse(accountID)
+	if err != nil {
+		return analyticsdomain.EquityResponse{}, fmt.Errorf("parse account id: %w", err)
+	}
+
+	dailyRows, err := r.q.GetMT5EquityFromDaily(ctx, uid)
+	if err != nil {
+		return analyticsdomain.EquityResponse{}, fmt.Errorf("query equity from daily: %w", err)
+	}
+	points := make([]analyticsdomain.EquityPoint, 0, len(dailyRows))
+	for _, row := range dailyRows {
+		points = append(points, analyticsdomain.EquityPoint{
+			Day:    dateToYYYYMMDD(row.Day),
+			Equity: numericToString(row.Equity),
+		})
+	}
+	if len(points) > 0 {
+		return analyticsdomain.EquityResponse{Points: points}, nil
+	}
+
+	fallbackRows, err := r.q.GetMT5EquityFallback(ctx, uid)
+	if err != nil {
+		return analyticsdomain.EquityResponse{}, fmt.Errorf("query equity fallback: %w", err)
+	}
+	points = make([]analyticsdomain.EquityPoint, 0, len(fallbackRows))
+	for _, row := range fallbackRows {
+		points = append(points, analyticsdomain.EquityPoint{
+			Day:    dateToYYYYMMDD(row.Day),
+			Equity: numericToString(row.Equity),
+		})
+	}
+	return analyticsdomain.EquityResponse{Points: points}, nil
+}
+
+func (r *Repository) RecomputeDaily(ctx context.Context, accountID string) (int, error) {
+	uid, err := uuid.Parse(accountID)
+	if err != nil {
+		return 0, fmt.Errorf("parse account id: %w", err)
+	}
+	rowsAffected, err := r.q.RecomputeMT5AnalyticsDaily(ctx, uid)
+	if err != nil {
+		return 0, fmt.Errorf("recompute daily analytics: %w", err)
+	}
+	return int(rowsAffected), nil
+}
+
+func dateToYYYYMMDD(d pgtype.Date) string {
+	if !d.Valid {
+		return ""
+	}
+	return d.Time.Format("2006-01-02")
+}

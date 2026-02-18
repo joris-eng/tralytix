@@ -75,7 +75,9 @@ func main() {
 	analyticsUC := analyticsusecase.NewUseCase(analyticsRepo)
 	analyticsHandler := analyticstransport.NewHandler(analyticsUC, authMW)
 	mt5AnalyticsUC := analyticsusecase.NewGetMT5SummaryUseCase(analyticsRepo)
-	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, authMW)
+	mt5InsightsUC := analyticsusecase.NewGetMT5InsightsUseCase(mt5AnalyticsUC)
+	mt5RecomputeUC := analyticsusecase.NewRecomputeDailyUseCase(analyticsRepo)
+	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, mt5InsightsUC, mt5RecomputeUC, authMW)
 
 	mt5Repo := mt5postgres.NewRepository(dbClient.Pool())
 	mt5Importer := mt5csv.NewImporter()

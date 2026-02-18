@@ -32,6 +32,23 @@ type Instrument struct {
 	CreatedAt  time.Time   `json:"created_at"`
 }
 
+type Mt5AnalyticsDaily struct {
+	ID           uuid.UUID      `json:"id"`
+	AccountID    uuid.UUID      `json:"account_id"`
+	Day          pgtype.Date    `json:"day"`
+	TotalTrades  int32          `json:"total_trades"`
+	Winners      int32          `json:"winners"`
+	Losers       int32          `json:"losers"`
+	TotalProfit  pgtype.Numeric `json:"total_profit"`
+	AvgProfit    pgtype.Numeric `json:"avg_profit"`
+	MaxProfit    pgtype.Numeric `json:"max_profit"`
+	MinProfit    pgtype.Numeric `json:"min_profit"`
+	ProfitFactor pgtype.Numeric `json:"profit_factor"`
+	WinRate      pgtype.Numeric `json:"win_rate"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+}
+
 type Mt5Trade struct {
 	ID         int64              `json:"id"`
 	AccountID  uuid.UUID          `json:"account_id"`
