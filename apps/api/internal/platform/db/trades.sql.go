@@ -7,7 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -30,14 +32,14 @@ RETURNING id, user_id, instrument_id, side, qty, entry_price, exit_price, opened
 `
 
 type CreateTradeParams struct {
-	ID           pgtype.UUID        `json:"id"`
-	UserID       pgtype.UUID        `json:"user_id"`
-	InstrumentID pgtype.UUID        `json:"instrument_id"`
+	ID           uuid.UUID          `json:"id"`
+	UserID       uuid.UUID          `json:"user_id"`
+	InstrumentID uuid.UUID          `json:"instrument_id"`
 	Side         string             `json:"side"`
 	Qty          pgtype.Numeric     `json:"qty"`
 	EntryPrice   pgtype.Numeric     `json:"entry_price"`
 	ExitPrice    pgtype.Numeric     `json:"exit_price"`
-	OpenedAt     pgtype.Timestamptz `json:"opened_at"`
+	OpenedAt     time.Time          `json:"opened_at"`
 	ClosedAt     pgtype.Timestamptz `json:"closed_at"`
 	Column10     interface{}        `json:"column_10"`
 	Notes        pgtype.Text        `json:"notes"`
@@ -83,9 +85,9 @@ LIMIT $2 OFFSET $3
 `
 
 type ListTradesByUserParams struct {
-	UserID pgtype.UUID `json:"user_id"`
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
 }
 
 func (q *Queries) ListTradesByUser(ctx context.Context, arg ListTradesByUserParams) ([]Trade, error) {

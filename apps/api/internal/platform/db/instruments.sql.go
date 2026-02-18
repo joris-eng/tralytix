@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -52,7 +53,7 @@ RETURNING id, symbol, asset_class, exchange, currency, created_at
 `
 
 type UpsertInstrumentParams struct {
-	ID         pgtype.UUID `json:"id"`
+	ID         uuid.UUID   `json:"id"`
 	Symbol     string      `json:"symbol"`
 	AssetClass string      `json:"asset_class"`
 	Exchange   pgtype.Text `json:"exchange"`

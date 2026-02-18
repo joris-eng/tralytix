@@ -5,65 +5,87 @@
 package db
 
 import (
+	"time"
+
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Candle struct {
-	InstrumentID pgtype.UUID        `json:"instrument_id"`
-	Timeframe    string             `json:"timeframe"`
-	Ts           pgtype.Timestamptz `json:"ts"`
-	Open         pgtype.Numeric     `json:"open"`
-	High         pgtype.Numeric     `json:"high"`
-	Low          pgtype.Numeric     `json:"low"`
-	Close        pgtype.Numeric     `json:"close"`
-	Volume       pgtype.Numeric     `json:"volume"`
-	Provider     string             `json:"provider"`
+	InstrumentID uuid.UUID      `json:"instrument_id"`
+	Timeframe    string         `json:"timeframe"`
+	Ts           time.Time      `json:"ts"`
+	Open         pgtype.Numeric `json:"open"`
+	High         pgtype.Numeric `json:"high"`
+	Low          pgtype.Numeric `json:"low"`
+	Close        pgtype.Numeric `json:"close"`
+	Volume       pgtype.Numeric `json:"volume"`
+	Provider     string         `json:"provider"`
 }
 
 type Instrument struct {
-	ID         pgtype.UUID        `json:"id"`
+	ID         uuid.UUID   `json:"id"`
+	Symbol     string      `json:"symbol"`
+	AssetClass string      `json:"asset_class"`
+	Exchange   pgtype.Text `json:"exchange"`
+	Currency   string      `json:"currency"`
+	CreatedAt  time.Time   `json:"created_at"`
+}
+
+type Mt5Trade struct {
+	ID         int64              `json:"id"`
+	AccountID  uuid.UUID          `json:"account_id"`
+	Ticket     string             `json:"ticket"`
 	Symbol     string             `json:"symbol"`
-	AssetClass string             `json:"asset_class"`
-	Exchange   pgtype.Text        `json:"exchange"`
-	Currency   string             `json:"currency"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	Side       string             `json:"side"`
+	Volume     pgtype.Numeric     `json:"volume"`
+	OpenPrice  pgtype.Numeric     `json:"open_price"`
+	ClosePrice pgtype.Numeric     `json:"close_price"`
+	OpenedAt   time.Time          `json:"opened_at"`
+	ClosedAt   pgtype.Timestamptz `json:"closed_at"`
+	Commission pgtype.Numeric     `json:"commission"`
+	Swap       pgtype.Numeric     `json:"swap"`
+	Profit     pgtype.Numeric     `json:"profit"`
+	Comment    pgtype.Text        `json:"comment"`
+	SourceHash string             `json:"source_hash"`
+	ImportedAt time.Time          `json:"imported_at"`
 }
 
 type Session struct {
-	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
-	TokenHash string             `json:"token_hash"`
-	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	TokenHash string    `json:"token_hash"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Tag struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
-	Name   string      `json:"name"`
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+	Name   string    `json:"name"`
 }
 
 type Trade struct {
-	ID           pgtype.UUID        `json:"id"`
-	UserID       pgtype.UUID        `json:"user_id"`
-	InstrumentID pgtype.UUID        `json:"instrument_id"`
+	ID           uuid.UUID          `json:"id"`
+	UserID       uuid.UUID          `json:"user_id"`
+	InstrumentID uuid.UUID          `json:"instrument_id"`
 	Side         string             `json:"side"`
 	Qty          pgtype.Numeric     `json:"qty"`
 	EntryPrice   pgtype.Numeric     `json:"entry_price"`
 	ExitPrice    pgtype.Numeric     `json:"exit_price"`
-	OpenedAt     pgtype.Timestamptz `json:"opened_at"`
+	OpenedAt     time.Time          `json:"opened_at"`
 	ClosedAt     pgtype.Timestamptz `json:"closed_at"`
 	Fees         pgtype.Numeric     `json:"fees"`
 	Notes        pgtype.Text        `json:"notes"`
 }
 
 type TradeTag struct {
-	TradeID pgtype.UUID `json:"trade_id"`
-	TagID   pgtype.UUID `json:"tag_id"`
+	TradeID uuid.UUID `json:"trade_id"`
+	TagID   uuid.UUID `json:"tag_id"`
 }
 
 type User struct {
-	ID        pgtype.UUID        `json:"id"`
-	Email     string             `json:"email"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
 }

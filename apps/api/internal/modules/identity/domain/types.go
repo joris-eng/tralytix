@@ -1,16 +1,20 @@
 package domain
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type User struct {
-	ID        string
+	ID        uuid.UUID
 	Email     string
 	CreatedAt time.Time
 }
 
 type Session struct {
-	ID        string
-	UserID    string
+	ID        uuid.UUID
+	UserID    uuid.UUID
 	TokenHash string
 	ExpiresAt time.Time
 	CreatedAt time.Time

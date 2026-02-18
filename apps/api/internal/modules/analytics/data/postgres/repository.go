@@ -3,7 +3,12 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	analyticsdomain "github.com/yourname/trading-saas/apps/api/internal/modules/analytics/domain"
 	tradingdomain "github.com/yourname/trading-saas/apps/api/internal/modules/trading/domain"
 	"github.com/yourname/trading-saas/apps/api/internal/platform/db"
 )
@@ -17,31 +22,151 @@ func NewRepository(q *db.Queries) *Repository {
 }
 
 func (r *Repository) ListByUser(ctx context.Context, userID string, limit, offset int32) ([]tradingdomain.Trade, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, fmt.Errorf("parse user id: %w", err)
+	}
+
 	rows, err := r.q.ListTradesByUser(ctx, db.ListTradesByUserParams{
-		UserID: userID,
+		UserID: uid,
 		Limit:  limit,
 		Offset: offset,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("query trades by user: %w", err)
 	}
-
 	out := make([]tradingdomain.Trade, 0, len(rows))
 	for _, t := range rows {
-		out = append(out, tradingdomain.Trade{
-			ID:           t.ID,
-			UserID:       t.UserID,
-			InstrumentID: t.InstrumentID,
-			Side:         t.Side,
-			Qty:          t.Qty,
-			EntryPrice:   t.EntryPrice,
-			ExitPrice:    t.ExitPrice,
-			OpenedAt:     t.OpenedAt,
-			ClosedAt:     t.ClosedAt,
-			Fees:         t.Fees,
-			Notes:        t.Notes,
-		})
+		out = append(out, mapTrade(t))
+	}
+	return out, nil
+}
+
+func mapTrade(t db.Trade) tradingdomain.Trade {
+	return tradingdomain.Trade{
+		ID:           t.ID.String(),
+		UserID:       t.UserID.String(),
+		InstrumentID: t.InstrumentID.String(),
+		Side:         t.Side,
+		Qty:          numericToFloat64(t.Qty),
+		EntryPrice:   numericToFloat64(t.EntryPrice),
+		ExitPrice:    numericToFloat64Ptr(t.ExitPrice),
+		OpenedAt:     t.OpenedAt,
+		ClosedAt:     timestamptzToTimePtr(t.ClosedAt),
+		Fees:         numericToFloat64(t.Fees),
+		Notes:        textToStringPtr(t.Notes),
+	}
+}
+
+func numericToFloat64(n pgtype.Numeric) float64 {
+	if !n.Valid {
+		return 0
+	}
+	f, err := n.Float64Value()
+	if err != nil || !f.Valid {
+		return 0
+	}
+	return f.Float64
+}
+
+func numericToFloat64Ptr(n pgtype.Numeric) *float64 {
+	if !n.Valid {
+		return nil
+	}
+	f, err := n.Float64Value()
+	if err != nil || !f.Valid {
+		return nil
+	}
+	out := f.Float64
+	return &out
+}
+
+func timestamptzToTimePtr(ts pgtype.Timestamptz) *time.Time {
+	if !ts.Valid {
+		return nil
+	}
+	tt := ts.Time
+	return &tt
+}
+
+func textToStringPtr(t pgtype.Text) *string {
+	if !t.Valid {
+		return nil
+	}
+	s := t.String
+	return &s
+}
+
+func (r *Repository) MT5SummaryByAccount(ctx context.Context, accountID string) (analyticsdomain.MT5Summary, error) {
+	uid, err := uuid.Parse(accountID)
+	if err != nil {
+		return analyticsdomain.MT5Summary{}, fmt.Errorf("parse account id: %w", err)
 	}
 
+	row, err := r.q.GetMT5Summary(ctx, uid)
+	if err != nil {
+		return analyticsdomain.MT5Summary{}, fmt.Errorf("query mt5 summary: %w", err)
+	}
+
+	snapshot, err := r.q.GetMT5AccountSnapshot(ctx, uid)
+	if err != nil {
+		return analyticsdomain.MT5Summary{}, fmt.Errorf("query mt5 snapshot: %w", err)
+	}
+
+	out := analyticsdomain.MT5Summary{
+		AccountID:    accountID,
+		TotalTrades:  row.TotalTrades,
+		TotalProfit:  numericToString(row.TotalProfit),
+		AvgProfit:    numericToString(row.AvgProfit),
+		Winners:      row.Winners,
+		Losers:       row.Losers,
+		WinRate:      numericToString(row.WinRate),
+		ProfitFactor: numericToStringPtr(row.ProfitFactor),
+		MaxProfit:    numericToString(row.MaxProfit),
+		MinProfit:    numericToString(row.MinProfit),
+	}
+	out.LastImportedAt = toRFC3339StringPtr(snapshot.LastImportedAt)
 	return out, nil
+}
+
+func numericToString(n pgtype.Numeric) string {
+	if !n.Valid {
+		return "0"
+	}
+	b, err := n.MarshalJSON()
+	if err != nil {
+		return "0"
+	}
+	s := strings.TrimSpace(string(b))
+	if s == "" || s == "null" {
+		return "0"
+	}
+	return s
+}
+
+func numericToStringPtr(n pgtype.Numeric) *string {
+	if !n.Valid {
+		return nil
+	}
+	b, err := n.MarshalJSON()
+	if err != nil {
+		return nil
+	}
+	s := strings.TrimSpace(string(b))
+	if s == "" || s == "null" {
+		return nil
+	}
+	return &s
+}
+
+func toRFC3339StringPtr(v interface{}) *string {
+	if v == nil {
+		return nil
+	}
+	tm, ok := v.(time.Time)
+	if !ok {
+		return nil
+	}
+	s := tm.Format(time.RFC3339)
+	return &s
 }

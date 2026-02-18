@@ -9,11 +9,16 @@ import (
 	"time"
 
 	analyticspostgres "github.com/yourname/trading-saas/apps/api/internal/modules/analytics/data/postgres"
+	analyticsdelivery "github.com/yourname/trading-saas/apps/api/internal/modules/analytics/delivery/http"
 	analyticstransport "github.com/yourname/trading-saas/apps/api/internal/modules/analytics/transport/http"
 	analyticsusecase "github.com/yourname/trading-saas/apps/api/internal/modules/analytics/usecase"
 	identitypostgres "github.com/yourname/trading-saas/apps/api/internal/modules/identity/data/postgres"
 	identitytransport "github.com/yourname/trading-saas/apps/api/internal/modules/identity/transport/http"
 	identityusecase "github.com/yourname/trading-saas/apps/api/internal/modules/identity/usecase"
+	mt5csv "github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/adapters/csv"
+	mt5postgres "github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/adapters/postgres"
+	mt5transport "github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/adapters/http"
+	mt5application "github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/application"
 	marketdatapostgres "github.com/yourname/trading-saas/apps/api/internal/modules/marketdata/data/postgres"
 	marketdatatransport "github.com/yourname/trading-saas/apps/api/internal/modules/marketdata/transport/http"
 	marketdatausecase "github.com/yourname/trading-saas/apps/api/internal/modules/marketdata/usecase"
@@ -69,6 +74,13 @@ func main() {
 	analyticsRepo := analyticspostgres.NewRepository(queries)
 	analyticsUC := analyticsusecase.NewUseCase(analyticsRepo)
 	analyticsHandler := analyticstransport.NewHandler(analyticsUC, authMW)
+	mt5AnalyticsUC := analyticsusecase.NewGetMT5SummaryUseCase(analyticsRepo)
+	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, authMW)
+
+	mt5Repo := mt5postgres.NewRepository(dbClient.Pool())
+	mt5Importer := mt5csv.NewImporter()
+	mt5UC := mt5application.NewService(mt5Repo, mt5Importer, clock, cfg.MT5ImportMaxRows)
+	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes)
 
 	router := httpx.NewRouter(
 		httpx.RouterDeps{
@@ -80,6 +92,8 @@ func main() {
 		marketdataHandler,
 		tradingHandler,
 		analyticsHandler,
+		mt5AnalyticsHandler,
+		mt5Handler,
 	)
 
 	server := httpx.NewServer(":"+cfg.Port, router, log)

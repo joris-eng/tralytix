@@ -7,8 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 const createSession = `-- name: CreateSession :one
@@ -18,10 +19,10 @@ RETURNING id, user_id, token_hash, expires_at, created_at
 `
 
 type CreateSessionParams struct {
-	ID        pgtype.UUID        `json:"id"`
-	UserID    pgtype.UUID        `json:"user_id"`
-	TokenHash string             `json:"token_hash"`
-	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	TokenHash string    `json:"token_hash"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {

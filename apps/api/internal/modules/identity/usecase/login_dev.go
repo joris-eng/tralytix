@@ -11,8 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/yourname/trading-saas/apps/api/internal/modules/identity/domain"
+	"github.com/google/uuid"
+
+	domain "github.com/yourname/trading-saas/apps/api/internal/modules/identity/domain"
 	platformtime "github.com/yourname/trading-saas/apps/api/internal/platform/time"
+
 )
 
 var (
@@ -27,7 +30,7 @@ type UserRepository interface {
 }
 
 type SessionRepository interface {
-	CreateSession(ctx context.Context, userID string, tokenHash string, expiresAt time.Time) (domain.Session, error)
+	CreateSession(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (domain.Session, error)
 	GetByTokenHash(ctx context.Context, tokenHash string) (domain.Session, error)
 }
 

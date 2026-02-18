@@ -7,7 +7,9 @@ package db
 
 import (
 	"context"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -23,11 +25,11 @@ LIMIT $5
 `
 
 type GetCandlesParams struct {
-	InstrumentID pgtype.UUID        `json:"instrument_id"`
-	Timeframe    string             `json:"timeframe"`
-	Ts           pgtype.Timestamptz `json:"ts"`
-	Ts_2         pgtype.Timestamptz `json:"ts_2"`
-	Limit        int32              `json:"limit"`
+	InstrumentID uuid.UUID `json:"instrument_id"`
+	Timeframe    string    `json:"timeframe"`
+	Ts           time.Time `json:"ts"`
+	Ts_2         time.Time `json:"ts_2"`
+	Limit        int32     `json:"limit"`
 }
 
 func (q *Queries) GetCandles(ctx context.Context, arg GetCandlesParams) ([]Candle, error) {
@@ -91,15 +93,15 @@ RETURNING instrument_id, timeframe, ts, open, high, low, close, volume, provider
 `
 
 type InsertCandleParams struct {
-	InstrumentID pgtype.UUID        `json:"instrument_id"`
-	Timeframe    string             `json:"timeframe"`
-	Ts           pgtype.Timestamptz `json:"ts"`
-	Open         pgtype.Numeric     `json:"open"`
-	High         pgtype.Numeric     `json:"high"`
-	Low          pgtype.Numeric     `json:"low"`
-	Close        pgtype.Numeric     `json:"close"`
-	Volume       pgtype.Numeric     `json:"volume"`
-	Provider     string             `json:"provider"`
+	InstrumentID uuid.UUID      `json:"instrument_id"`
+	Timeframe    string         `json:"timeframe"`
+	Ts           time.Time      `json:"ts"`
+	Open         pgtype.Numeric `json:"open"`
+	High         pgtype.Numeric `json:"high"`
+	Low          pgtype.Numeric `json:"low"`
+	Close        pgtype.Numeric `json:"close"`
+	Volume       pgtype.Numeric `json:"volume"`
+	Provider     string         `json:"provider"`
 }
 
 func (q *Queries) InsertCandle(ctx context.Context, arg InsertCandleParams) (Candle, error) {

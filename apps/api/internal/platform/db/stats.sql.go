@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -66,7 +67,7 @@ type StatsSummaryByUserRow struct {
 	ProfitFactor interface{}    `json:"profit_factor"`
 }
 
-func (q *Queries) StatsSummaryByUser(ctx context.Context, userID pgtype.UUID) (StatsSummaryByUserRow, error) {
+func (q *Queries) StatsSummaryByUser(ctx context.Context, userID uuid.UUID) (StatsSummaryByUserRow, error) {
 	row := q.db.QueryRow(ctx, statsSummaryByUser, userID)
 	var i StatsSummaryByUserRow
 	err := row.Scan(

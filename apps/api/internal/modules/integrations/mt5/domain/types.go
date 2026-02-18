@@ -15,6 +15,7 @@ var (
 	ErrInvalidVolume    = errors.New("invalid volume")
 	ErrInvalidOpenPrice = errors.New("invalid open_price")
 	ErrInvalidOpenedAt  = errors.New("invalid opened_at")
+	ErrInvalidSource    = errors.New("invalid source_hash")
 )
 
 type Trade struct {
@@ -45,10 +46,10 @@ type Position struct {
 }
 
 type AccountSnapshot struct {
-	AccountID        string
-	TotalTrades      int64
-	LastImportedAt   *time.Time
-	LastImportStatus string
+	AccountID        string     `json:"account_id"`
+	TotalTrades      int64      `json:"total_trades"`
+	LastImportedAt   *time.Time `json:"last_imported_at,omitempty"`
+	LastImportStatus string     `json:"last_import_status"`
 }
 
 func (t Trade) Validate() error {
@@ -80,7 +81,7 @@ func (t Trade) Validate() error {
 		return fmt.Errorf("closed_at is before opened_at")
 	}
 	if strings.TrimSpace(t.SourceHash) == "" {
-		return fmt.Errorf("invalid source_hash")
+		return ErrInvalidSource
 	}
 	return nil
 }

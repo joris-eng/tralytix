@@ -38,7 +38,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (domain.User,
 
 func (r *Repository) CreateUser(ctx context.Context, email string) (domain.User, error) {
 	row, err := r.q.CreateUser(ctx, db.CreateUserParams{
-		ID:    uuid.NewString(),
+		ID:    uuid.New(),
 		Email: email,
 	})
 	if err != nil {
@@ -51,9 +51,9 @@ func (r *Repository) CreateUser(ctx context.Context, email string) (domain.User,
 	}, nil
 }
 
-func (r *Repository) CreateSession(ctx context.Context, userID string, tokenHash string, expiresAt time.Time) (domain.Session, error) {
+func (r *Repository) CreateSession(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) (domain.Session, error) {
 	row, err := r.q.CreateSession(ctx, db.CreateSessionParams{
-		ID:        uuid.NewString(),
+		ID:        uuid.New(),
 		UserID:    userID,
 		TokenHash: tokenHash,
 		ExpiresAt: expiresAt,

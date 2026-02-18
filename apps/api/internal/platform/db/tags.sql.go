@@ -8,7 +8,7 @@ package db
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 const addTagToTrade = `-- name: AddTagToTrade :exec
@@ -18,8 +18,8 @@ ON CONFLICT (trade_id, tag_id) DO NOTHING
 `
 
 type AddTagToTradeParams struct {
-	TradeID pgtype.UUID `json:"trade_id"`
-	TagID   pgtype.UUID `json:"tag_id"`
+	TradeID uuid.UUID `json:"trade_id"`
+	TagID   uuid.UUID `json:"tag_id"`
 }
 
 func (q *Queries) AddTagToTrade(ctx context.Context, arg AddTagToTradeParams) error {
@@ -34,9 +34,9 @@ RETURNING id, user_id, name
 `
 
 type CreateTagParams struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
-	Name   string      `json:"name"`
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+	Name   string    `json:"name"`
 }
 
 func (q *Queries) CreateTag(ctx context.Context, arg CreateTagParams) (Tag, error) {
@@ -53,8 +53,8 @@ WHERE id = $1
 `
 
 type DeleteTagParams struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) DeleteTag(ctx context.Context, arg DeleteTagParams) error {
@@ -68,7 +68,7 @@ FROM tags
 WHERE id = $1
 `
 
-func (q *Queries) GetTagByID(ctx context.Context, id pgtype.UUID) (Tag, error) {
+func (q *Queries) GetTagByID(ctx context.Context, id uuid.UUID) (Tag, error) {
 	row := q.db.QueryRow(ctx, getTagByID, id)
 	var i Tag
 	err := row.Scan(&i.ID, &i.UserID, &i.Name)
@@ -83,7 +83,7 @@ WHERE tt.trade_id = $1
 ORDER BY t.name ASC
 `
 
-func (q *Queries) ListTagsByTrade(ctx context.Context, tradeID pgtype.UUID) ([]Tag, error) {
+func (q *Queries) ListTagsByTrade(ctx context.Context, tradeID uuid.UUID) ([]Tag, error) {
 	rows, err := q.db.Query(ctx, listTagsByTrade, tradeID)
 	if err != nil {
 		return nil, err
@@ -112,9 +112,9 @@ LIMIT $2 OFFSET $3
 `
 
 type ListTagsByUserParams struct {
-	UserID pgtype.UUID `json:"user_id"`
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
+	UserID uuid.UUID `json:"user_id"`
+	Limit  int32     `json:"limit"`
+	Offset int32     `json:"offset"`
 }
 
 func (q *Queries) ListTagsByUser(ctx context.Context, arg ListTagsByUserParams) ([]Tag, error) {
@@ -144,8 +144,8 @@ WHERE trade_id = $1
 `
 
 type RemoveTagFromTradeParams struct {
-	TradeID pgtype.UUID `json:"trade_id"`
-	TagID   pgtype.UUID `json:"tag_id"`
+	TradeID uuid.UUID `json:"trade_id"`
+	TagID   uuid.UUID `json:"tag_id"`
 }
 
 func (q *Queries) RemoveTagFromTrade(ctx context.Context, arg RemoveTagFromTradeParams) error {
