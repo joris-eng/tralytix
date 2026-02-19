@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -26,15 +27,38 @@ func Logging(logger *slog.Logger) func(http.Handler) http.Handler {
 			start := time.Now()
 			sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
 
+			userID := userIDFromContext(r.Context())
+			logger.Info("http request start",
+				"request_id", GetRequestID(r.Context()),
+				"method", r.Method,
+				"path", r.URL.Path,
+				"user_id", userID,
+			)
+
 			next.ServeHTTP(sw, r)
 
-			logger.Info("http request",
+			attrs := []any{
 				"request_id", GetRequestID(r.Context()),
 				"method", r.Method,
 				"path", r.URL.Path,
 				"status", sw.status,
 				"duration_ms", time.Since(start).Milliseconds(),
-			)
+				"user_id", userID,
+			}
+			if sw.status >= http.StatusInternalServerError {
+				logger.Error("http request end", attrs...)
+				return
+			}
+			logger.Info("http request end", attrs...)
 		})
 	}
+}
+
+func userIDFromContext(ctx context.Context) string {
+	v := ctx.Value("auth_user_id")
+	s, ok := v.(string)
+	if !ok {
+		return ""
+	}
+	return s
 }

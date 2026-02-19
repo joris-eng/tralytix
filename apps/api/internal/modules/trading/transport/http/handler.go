@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	identityhttp "github.com/yourname/trading-saas/apps/api/internal/modules/identity/transport/http"
@@ -43,6 +44,15 @@ type createTradeRequest struct {
 }
 
 func (h *Handler) createTrade(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil || r.Body == http.NoBody {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "request body is required")
+		return
+	}
+	if ct := strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Type"))); !strings.HasPrefix(ct, "application/json") {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "content-type must be application/json")
+		return
+	}
+
 	userID, ok := identityhttp.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
@@ -50,7 +60,9 @@ func (h *Handler) createTrade(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req createTradeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&req); err != nil {
 		platformerrors.WriteHTTP(w, http.StatusBadRequest, "invalid json body")
 		return
 	}
@@ -99,6 +111,10 @@ func (h *Handler) listTrades(w http.ResponseWriter, r *http.Request) {
 		if n, err := strconv.Atoi(raw); err == nil {
 			offset = int32(n)
 		}
+	}
+	if limit <= 0 || offset < 0 {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "invalid pagination parameters")
+		return
 	}
 
 	trades, err := h.uc.ListTradesByUser(r.Context(), userID, limit, offset)

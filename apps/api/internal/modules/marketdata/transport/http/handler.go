@@ -30,6 +30,10 @@ func (h *Handler) getCandles(w http.ResponseWriter, r *http.Request) {
 	tf := strings.TrimSpace(r.URL.Query().Get("tf"))
 	fromRaw := strings.TrimSpace(r.URL.Query().Get("from"))
 	toRaw := strings.TrimSpace(r.URL.Query().Get("to"))
+	if symbol == "" || asset == "" || tf == "" || fromRaw == "" || toRaw == "" {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "missing required query parameters")
+		return
+	}
 
 	from, err := time.Parse(time.RFC3339, fromRaw)
 	if err != nil {

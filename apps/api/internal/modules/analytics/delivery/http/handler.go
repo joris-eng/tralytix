@@ -14,6 +14,7 @@ type Handler struct {
 	insightsUC  *analyticsusecase.GetMT5InsightsUseCase
 	recomputeUC *analyticsusecase.RecomputeDailyUseCase
 	authMW      *identityhttp.AuthMiddleware
+	rateLimitMW func(http.Handler) http.Handler
 }
 
 func NewHandler(
@@ -21,12 +22,14 @@ func NewHandler(
 	insightsUC *analyticsusecase.GetMT5InsightsUseCase,
 	recomputeUC *analyticsusecase.RecomputeDailyUseCase,
 	authMW *identityhttp.AuthMiddleware,
+	rateLimitMW func(http.Handler) http.Handler,
 ) *Handler {
 	return &Handler{
 		summaryUC:   summaryUC,
 		insightsUC:  insightsUC,
 		recomputeUC: recomputeUC,
 		authMW:      authMW,
+		rateLimitMW: rateLimitMW,
 	}
 }
 

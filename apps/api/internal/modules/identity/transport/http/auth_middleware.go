@@ -42,6 +42,7 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := context.WithValue(r.Context(), authUserIDKey, session.UserID.String())
+		ctx = context.WithValue(ctx, "auth_user_id", session.UserID.String())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -49,4 +50,9 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 func AuthUserID(ctx context.Context) (string, bool) {
 	userID, ok := ctx.Value(authUserIDKey).(string)
 	return userID, ok
+}
+
+func WithAuthUserID(ctx context.Context, userID string) context.Context {
+	ctx = context.WithValue(ctx, authUserIDKey, userID)
+	return context.WithValue(ctx, "auth_user_id", userID)
 }

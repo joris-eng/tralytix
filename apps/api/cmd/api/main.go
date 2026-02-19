@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,6 +30,7 @@ import (
 	"github.com/yourname/trading-saas/apps/api/internal/platform/db"
 	"github.com/yourname/trading-saas/apps/api/internal/platform/httpx"
 	"github.com/yourname/trading-saas/apps/api/internal/platform/logger"
+	platformmiddleware "github.com/yourname/trading-saas/apps/api/internal/platform/middleware"
 	"github.com/yourname/trading-saas/apps/api/internal/platform/postgres"
 	platformtime "github.com/yourname/trading-saas/apps/api/internal/platform/time"
 )
@@ -62,6 +64,13 @@ func main() {
 	loginDevUC := identityusecase.NewLoginDevUseCase(identityRepo, identityRepo, clock, 24*time.Hour)
 	authMW := identitytransport.NewAuthMiddleware(loginDevUC)
 	identityHandler := identitytransport.NewHandler(loginDevUC)
+	apiRateLimiter := platformmiddleware.NewRateLimiter(cfg.RateLimitRPM, time.Minute)
+	authRateLimitMW := apiRateLimiter.Middleware(func(r *http.Request) string {
+		if userID, ok := identitytransport.AuthUserID(r.Context()); ok && userID != "" {
+			return "user:" + userID
+		}
+		return ""
+	})
 
 	marketdataRepo := marketdatapostgres.NewRepository(queries)
 	marketdataUC := marketdatausecase.NewGetCandlesUseCase(marketdataRepo, marketdataRepo)
@@ -77,18 +86,22 @@ func main() {
 	mt5AnalyticsUC := analyticsusecase.NewGetMT5SummaryUseCase(analyticsRepo)
 	mt5InsightsUC := analyticsusecase.NewGetMT5InsightsUseCase(mt5AnalyticsUC)
 	mt5RecomputeUC := analyticsusecase.NewRecomputeDailyUseCase(analyticsRepo)
-	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, mt5InsightsUC, mt5RecomputeUC, authMW)
+	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, mt5InsightsUC, mt5RecomputeUC, authMW, authRateLimitMW)
 
 	mt5Repo := mt5postgres.NewRepository(dbClient.Pool())
 	mt5Importer := mt5csv.NewImporter()
 	mt5UC := mt5application.NewService(mt5Repo, mt5Importer, clock, cfg.MT5ImportMaxRows)
-	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes)
+	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes, authRateLimitMW)
 
 	router := httpx.NewRouter(
 		httpx.RouterDeps{
-			Logger:  log,
-			Name:    cfg.Name,
-			Version: cfg.Version,
+			Logger:         log,
+			Name:           cfg.Name,
+			Version:        cfg.Version,
+			RequestTimeout: time.Duration(cfg.HTTPTimeoutSec) * time.Second,
+			HealthCheck: func(ctx context.Context) error {
+				return dbClient.Pool().Ping(ctx)
+			},
 		},
 		identityHandler,
 		marketdataHandler,

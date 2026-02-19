@@ -1,40 +1,67 @@
 package http
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	identityhttp "github.com/yourname/trading-saas/apps/api/internal/modules/identity/transport/http"
 	"github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/application"
+	"github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/domain"
 	platformerrors "github.com/yourname/trading-saas/apps/api/internal/platform/errors"
 	"github.com/yourname/trading-saas/apps/api/internal/platform/httpx"
 )
 
 type Handler struct {
-	svc            *application.Service
+	svc            service
 	authMW         *identityhttp.AuthMiddleware
 	maxUploadBytes int64
+	rateLimitMW    func(http.Handler) http.Handler
 }
 
-func NewHandler(svc *application.Service, authMW *identityhttp.AuthMiddleware, maxUploadBytes int64) *Handler {
+type service interface {
+	ImportCSV(ctx context.Context, accountID string, rawCSV []byte) (application.ImportResult, error)
+	Status(ctx context.Context, accountID string) (domain.AccountSnapshot, error)
+}
+
+func NewHandler(
+	svc service,
+	authMW *identityhttp.AuthMiddleware,
+	maxUploadBytes int64,
+	rateLimitMW func(http.Handler) http.Handler,
+) *Handler {
 	return &Handler{
 		svc:            svc,
 		authMW:         authMW,
 		maxUploadBytes: maxUploadBytes,
+		rateLimitMW:    rateLimitMW,
 	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Group(func(sr chi.Router) {
 		sr.Use(h.authMW.RequireAuth)
+		if h.rateLimitMW != nil {
+			sr.Use(h.rateLimitMW)
+		}
 		sr.Post("/integrations/mt5/import", h.importCSV)
 		sr.Get("/integrations/mt5/status", h.status)
 	})
 }
 
 func (h *Handler) importCSV(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil || r.Body == http.NoBody {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "request body is required")
+		return
+	}
+	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(r.Header.Get("Content-Type"))), "multipart/form-data") {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "content-type must be multipart/form-data")
+		return
+	}
+
 	userID, ok := identityhttp.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")

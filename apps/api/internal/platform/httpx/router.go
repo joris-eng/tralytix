@@ -1,8 +1,10 @@
 package httpx
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	platformmiddleware "github.com/yourname/trading-saas/apps/api/internal/platform/middleware"
@@ -13,9 +15,11 @@ type RouteRegistrar interface {
 }
 
 type RouterDeps struct {
-	Logger  *slog.Logger
-	Name    string
-	Version string
+	Logger         *slog.Logger
+	Name           string
+	Version        string
+	RequestTimeout time.Duration
+	HealthCheck    func(ctx context.Context) error
 }
 
 func NewRouter(deps RouterDeps, handlers ...RouteRegistrar) http.Handler {
@@ -27,9 +31,27 @@ func NewRouter(deps RouterDeps, handlers ...RouteRegistrar) http.Handler {
 	r.Use(platformmiddleware.RequestID)
 	r.Use(platformmiddleware.Recovery(deps.Logger))
 	r.Use(platformmiddleware.Logging(deps.Logger))
+	r.Use(platformmiddleware.Timeout(deps.RequestTimeout))
 
-	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
-		JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
+		ctx, cancel := context.WithTimeout(req.Context(), 2*time.Second)
+		defer cancel()
+
+		dbStatus := "ok"
+		if deps.HealthCheck != nil {
+			if err := deps.HealthCheck(ctx); err != nil {
+				dbStatus = "down"
+				JSON(w, http.StatusServiceUnavailable, map[string]string{
+					"status": "degraded",
+					"db":     dbStatus,
+				})
+				return
+			}
+		}
+		JSON(w, http.StatusOK, map[string]string{
+			"status": "ok",
+			"db":     dbStatus,
+		})
 	})
 
 	r.Get("/version", func(w http.ResponseWriter, _ *http.Request) {

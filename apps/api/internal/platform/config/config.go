@@ -13,6 +13,8 @@ type Config struct {
 	DBDSN             string
 	MT5ImportMaxBytes int64
 	MT5ImportMaxRows  int
+	HTTPTimeoutSec    int
+	RateLimitRPM      int
 }
 
 func Load() (Config, error) {
@@ -23,6 +25,8 @@ func Load() (Config, error) {
 		DBDSN:             os.Getenv("DB_DSN"),
 		MT5ImportMaxBytes: getenvInt64("MT5_IMPORT_MAX_BYTES", 10*1024*1024),
 		MT5ImportMaxRows:  getenvInt("MT5_IMPORT_MAX_ROWS", 20000),
+		HTTPTimeoutSec:    getenvInt("HTTP_TIMEOUT_SEC", 15),
+		RateLimitRPM:      getenvInt("RATE_LIMIT_RPM", 100),
 	}
 
 	if cfg.Port == "" {
@@ -36,6 +40,12 @@ func Load() (Config, error) {
 	}
 	if cfg.MT5ImportMaxRows <= 0 {
 		return Config{}, fmt.Errorf("MT5_IMPORT_MAX_ROWS must be > 0")
+	}
+	if cfg.HTTPTimeoutSec <= 0 {
+		return Config{}, fmt.Errorf("HTTP_TIMEOUT_SEC must be > 0")
+	}
+	if cfg.RateLimitRPM <= 0 {
+		return Config{}, fmt.Errorf("RATE_LIMIT_RPM must be > 0")
 	}
 
 	return cfg, nil
