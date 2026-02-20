@@ -1,10 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMt5Status } from "@/hooks/useMt5Status";
+import { useAuthGuard } from "@/shared/auth/useAuthGuard";
+import { useMt5Status } from "@/features/mt5/hooks";
+import { ApiError } from "@/shared/ui/ApiError";
+import { JsonBlock } from "@/shared/ui/JsonBlock";
 
 export default function Mt5StatusPage() {
+  const { isAuthenticated } = useAuthGuard();
   const { data, error, loading, refresh } = useMt5Status();
+  if (!isAuthenticated) {
+    return <p className="muted">Redirecting to login...</p>;
+  }
 
   return (
     <section className="card">
@@ -18,10 +25,8 @@ export default function Mt5StatusPage() {
       </div>
 
       {loading ? <p className="muted">Loading status...</p> : null}
-      {error ? <p className="error">{error}</p> : null}
-      {!loading && !error && data ? (
-        <pre style={{ overflowX: "auto" }}>{JSON.stringify(data, null, 2)}</pre>
-      ) : null}
+      {error ? <ApiError message={error} /> : null}
+      {!loading && !error && data ? <JsonBlock value={data} /> : null}
     </section>
   );
 }

@@ -1,28 +1,24 @@
 const TOKEN_KEY = "tralytix_token";
 
-let inMemoryToken: string | null = null;
+let memoryToken: string | null = null;
 
 export function isBrowser(): boolean {
   return typeof window !== "undefined";
 }
 
 export function getToken(): string | null {
-  if (inMemoryToken) {
-    return inMemoryToken;
+  if (memoryToken) {
+    return memoryToken;
   }
   if (!isBrowser()) {
     return null;
   }
-
-  const stored = window.localStorage.getItem(TOKEN_KEY);
-  if (stored) {
-    inMemoryToken = stored;
-  }
-  return stored;
+  memoryToken = window.localStorage.getItem(TOKEN_KEY);
+  return memoryToken;
 }
 
 export function setToken(token: string): void {
-  inMemoryToken = token;
+  memoryToken = token;
   if (!isBrowser()) {
     return;
   }
@@ -30,7 +26,7 @@ export function setToken(token: string): void {
 }
 
 export function clearToken(): void {
-  inMemoryToken = null;
+  memoryToken = null;
   if (!isBrowser()) {
     return;
   }

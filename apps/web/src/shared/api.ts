@@ -1,6 +1,6 @@
-import { httpClient } from "@/lib/http/client";
-import { clearToken, getToken as readToken, setToken as writeToken } from "@/lib/auth/tokenStore";
-import type { HttpMethod } from "@/lib/http/types";
+import { envDerived } from "@/shared/config/env";
+import { clearToken, getToken as readToken, setToken as writeToken } from "@/shared/auth/token";
+import { httpRequest, type HttpMethod } from "@/shared/api/http";
 
 type RequestOptions = {
   method?: HttpMethod;
@@ -24,8 +24,10 @@ export async function apiFetch<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  return httpClient.request<T>(options.method ?? "GET", path, {
-    auth: options.auth ?? false,
-    body: options.body
-  });
+  return httpRequest<T>(
+    { baseUrl: envDerived.apiRuntimeOrigin, defaultTimeoutMs: 8000 },
+    options.method ?? "GET",
+    path,
+    { auth: options.auth ?? false, body: options.body }
+  );
 }

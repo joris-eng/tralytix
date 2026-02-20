@@ -3,36 +3,41 @@
 ## Run locally
 
 ```bash
+cd apps/web
 pnpm install
+cp .env.example .env.local
 pnpm dev
 ```
 
 App URL: `http://localhost:3000`
 
-## API integration (modular client)
+Backend expected: `http://localhost:8080` with API prefix `/v1`.
 
-### Run
+## Environment variables
 
-```bash
-pnpm install
-pnpm dev
-```
+- `NEXT_PUBLIC_API_BASE=http://localhost:8080/v1`
 
-Ensure `apps/web/.env.local` contains:
+## Dev login flow
 
-```bash
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
-```
+1. Open `/login`
+2. Keep default `dev@local.test`
+3. Submit -> token stored in localStorage (`tralytix_token`)
+4. Go to `/` dashboard
 
-### Dev login flow
+## Dashboard path
 
-- `devLogin(email)` calls `POST /v1/auth/dev-login`.
-- The token is stored by `tokenStore` (memory + `localStorage` in browser).
-- API requests with `auth: true` automatically send `Authorization: Bearer <token>`.
+`/login` -> `/` -> sections:
+- Health + Version
+- MT5 status
+- MT5 CSV import
+- Trades list/create
+- Analytics summary/insights/equity + recompute
+- Marketdata candles probe
 
-### Add a new endpoint module
+## Feature pattern (anti-regression)
 
-1. Add endpoint path constants in `src/lib/api/endpoints.ts`.
-2. Create a focused module in `src/lib/api/<feature>.ts`.
-3. Use `httpClient.request<T>()` from `src/lib/http/client.ts`.
-4. Keep components free from direct `fetch`; call hook/service modules only.
+1. Add endpoint call in `src/shared/api/apiClient.ts`
+2. Define zod schema in `src/features/<feature>/model.ts`
+3. Implement typed calls in `src/features/<feature>/api.ts`
+4. Add hooks in `src/features/<feature>/hooks.ts`
+5. Render from `src/features/<feature>/ui/*` only (no direct fetch in components)
