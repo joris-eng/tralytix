@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Next.js
+.next/
+**/.next/
+
+# Build outputs
+dist/
+build/
+**/dist/
+**/build/
+
+# Env files
+.env.local
+.env.*.local
+**/.env.local
+**/.env.*.local
+apps/api/.env
+
+# TypeScript
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Logs
+*.log
+**/*.log
