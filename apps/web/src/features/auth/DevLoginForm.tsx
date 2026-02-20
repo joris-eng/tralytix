@@ -1,14 +1,10 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { apiFetch, setToken } from "@/shared/api";
-
-type DevLoginResponse = {
-  token: string;
-};
+import { devLogin } from "@/lib/auth/authService";
 
 export function DevLoginForm() {
-  const [email, setEmail] = useState("dev@example.com");
+  const [email, setEmail] = useState("dev@local.test");
   const [loading, setLoading] = useState(false);
   const [token, setLocalToken] = useState("");
   const [error, setError] = useState("");
@@ -18,11 +14,7 @@ export function DevLoginForm() {
     setLoading(true);
     setError("");
     try {
-      const response = await apiFetch<DevLoginResponse>("/v1/auth/dev-login", {
-        method: "POST",
-        body: { email }
-      });
-      setToken(response.token);
+      const response = await devLogin(email);
       setLocalToken(response.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

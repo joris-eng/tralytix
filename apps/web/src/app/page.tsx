@@ -9,6 +9,7 @@ export default function HomePage() {
         <Link href="/login">Go to Login</Link>
         <Link href="/chart">Go to Chart</Link>
         <Link href="/stats">Go to Stats</Link>
+        <Link href="/mt5-status">Go to MT5 Status</Link>
       </div>
     </section>
   );
