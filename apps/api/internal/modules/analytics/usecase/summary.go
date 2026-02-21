@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/yourname/trading-saas/apps/api/internal/modules/analytics/domain"
-	tradingdomain "github.com/yourname/trading-saas/apps/api/internal/modules/trading/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/domain"
+	tradingdomain "github.com/joris-eng/tralytix/apps/api/internal/modules/trading/domain"
 )
 
 type TradeReader interface {

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/domain"
 )
 
 type fakeRepo struct {

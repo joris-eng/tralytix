@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/domain"
 )
 
 type Repository struct {

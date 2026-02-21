@@ -1,4 +1,4 @@
-module github.com/yourname/trading-saas/apps/api
+module github.com/joris-eng/tralytix/apps/api
 
 go 1.24.0
 

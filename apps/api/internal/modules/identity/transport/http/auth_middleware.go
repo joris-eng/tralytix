@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	identityusecase "github.com/yourname/trading-saas/apps/api/internal/modules/identity/usecase"
-	platformerrors "github.com/yourname/trading-saas/apps/api/internal/platform/errors"
+	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
+	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 )
 
 type contextKey string

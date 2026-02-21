@@ -3,10 +3,10 @@ package http
 import (
 	"net/http"
 
-	identityhttp "github.com/yourname/trading-saas/apps/api/internal/modules/identity/transport/http"
-	analyticsusecase "github.com/yourname/trading-saas/apps/api/internal/modules/analytics/usecase"
-	platformerrors "github.com/yourname/trading-saas/apps/api/internal/platform/errors"
-	"github.com/yourname/trading-saas/apps/api/internal/platform/httpx"
+	identityhttp "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
+	analyticsusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/usecase"
+	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
 type Handler struct {

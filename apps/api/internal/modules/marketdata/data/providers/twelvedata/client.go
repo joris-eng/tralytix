@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/yourname/trading-saas/apps/api/internal/modules/marketdata/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/marketdata/domain"
 )
 
 var ErrNotImplemented = errors.New("twelvedata provider not implemented")

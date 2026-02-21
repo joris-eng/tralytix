@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	platformerrors "github.com/yourname/trading-saas/apps/api/internal/platform/errors"
+	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 )
 
 func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {

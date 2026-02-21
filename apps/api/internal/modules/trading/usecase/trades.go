@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yourname/trading-saas/apps/api/internal/modules/trading/domain"
-	platformtime "github.com/yourname/trading-saas/apps/api/internal/platform/time"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/trading/domain"
+	platformtime "github.com/joris-eng/tralytix/apps/api/internal/platform/time"
 )
 
 var (

@@ -13,8 +13,8 @@ import (
 
 	"github.com/google/uuid"
 
-	domain "github.com/yourname/trading-saas/apps/api/internal/modules/identity/domain"
-	platformtime "github.com/yourname/trading-saas/apps/api/internal/platform/time"
+	domain "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/domain"
+	platformtime "github.com/joris-eng/tralytix/apps/api/internal/platform/time"
 
 )
 

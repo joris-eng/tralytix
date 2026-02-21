@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/yourname/trading-saas/apps/api/internal/modules/identity/domain"
-	identityusecase "github.com/yourname/trading-saas/apps/api/internal/modules/identity/usecase"
-	"github.com/yourname/trading-saas/apps/api/internal/platform/db"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/identity/domain"
+	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/db"
 )
 
 type Repository struct {

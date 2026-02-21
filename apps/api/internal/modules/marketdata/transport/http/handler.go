@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/yourname/trading-saas/apps/api/internal/modules/marketdata/usecase"
-	platformerrors "github.com/yourname/trading-saas/apps/api/internal/platform/errors"
-	"github.com/yourname/trading-saas/apps/api/internal/platform/httpx"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/marketdata/usecase"
+	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
 type Handler struct {

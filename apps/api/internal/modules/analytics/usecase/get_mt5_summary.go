@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yourname/trading-saas/apps/api/internal/modules/analytics/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/domain"
 )
 
 type MT5SummaryRepository interface {

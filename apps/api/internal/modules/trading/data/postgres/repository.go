@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/yourname/trading-saas/apps/api/internal/modules/trading/domain"
-	"github.com/yourname/trading-saas/apps/api/internal/platform/db"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/trading/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/db"
 )
 
 type Repository struct {

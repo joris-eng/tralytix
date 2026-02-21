@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	identityhttp "github.com/yourname/trading-saas/apps/api/internal/modules/identity/transport/http"
-	"github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/application"
-	"github.com/yourname/trading-saas/apps/api/internal/modules/integrations/mt5/domain"
-	platformerrors "github.com/yourname/trading-saas/apps/api/internal/platform/errors"
-	"github.com/yourname/trading-saas/apps/api/internal/platform/httpx"
+	identityhttp "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/application"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/domain"
+	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
 type Handler struct {

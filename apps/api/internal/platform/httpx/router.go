@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	platformmiddleware "github.com/yourname/trading-saas/apps/api/internal/platform/middleware"
+	platformmiddleware "github.com/joris-eng/tralytix/apps/api/internal/platform/middleware"
 )
 
 type RouteRegistrar interface {
