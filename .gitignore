@@ -26,3 +26,4 @@ apps/api/.env
 # Logs
 *.log
 **/*.log
+apps/web/.env.local
