@@ -26,8 +26,12 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: apps/web/pnpm-lock.yaml
 
-      - name: Enable Corepack (pnpm)
-        run: corepack enable
+
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
 
       - name: Install web dependencies
         run: cd apps/web && pnpm install --frozen-lockfile
