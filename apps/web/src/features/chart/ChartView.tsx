@@ -1,12 +1,7 @@
 "use client";
-
+import { useChartCandles } from "@/features/chart/hooks";
 import { useMemo, useState } from "react";
-import { apiFetch } from "@/shared/api";
-import { Candle, CandlesChart } from "@/features/chart/CandlesChart";
-
-type CandlesResponse = {
-  candles: Candle[];
-};
+import { CandlesChart } from "@/features/chart/CandlesChart";
 
 function toLocalInputValue(date: Date): string {
   const tzOffset = date.getTimezoneOffset() * 60000;
@@ -24,32 +19,7 @@ export function ChartView() {
   const [timeframe, setTimeframe] = useState("1h");
   const [from, setFrom] = useState(toLocalInputValue(initialFrom));
   const [to, setTo] = useState(toLocalInputValue(now));
-  const [candles, setCandles] = useState<Candle[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  async function loadCandles() {
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams({
-        symbol,
-        asset: "FX",
-        tf: timeframe,
-        from: new Date(from).toISOString(),
-        to: new Date(to).toISOString()
-      });
-
-      const response = await apiFetch<CandlesResponse>(
-        `/v1/marketdata/candles?${params.toString()}`
-      );
-      setCandles(response.candles ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load candles");
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { candles, loading, error, loadCandles } = useChartCandles();
 
   return (
     <section className="card">
@@ -76,7 +46,7 @@ export function ChartView() {
           onChange={(e) => setFrom(e.target.value)}
         />
         <input type="datetime-local" value={to} onChange={(e) => setTo(e.target.value)} />
-        <button className="primary" onClick={loadCandles} disabled={loading}>
+        <button className="primary" onClick={() => loadCandles({ symbol, timeframe, from, to })} disabled={loading}>
           {loading ? "Loading..." : "Load Candles"}
         </button>
       </div>
