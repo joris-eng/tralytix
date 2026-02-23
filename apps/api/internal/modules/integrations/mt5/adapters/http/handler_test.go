@@ -59,7 +59,11 @@ func TestImportCSV_InvalidCSV_ReturnsBadRequest(t *testing.T) {
 	if err := json.Unmarshal(rr.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode json response: %v", err)
 	}
-	if payload["code"] != "BAD_REQUEST" {
-		t.Fatalf("expected code BAD_REQUEST, got %v", payload["code"])
+	errorPayload, ok := payload["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected nested error payload, got %v", payload)
+	}
+	if errorPayload["code"] != "BAD_REQUEST" {
+		t.Fatalf("expected code BAD_REQUEST, got %v", errorPayload["code"])
 	}
 }
