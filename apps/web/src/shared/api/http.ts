@@ -52,6 +52,10 @@ function isFormData(value: unknown): value is FormData {
   return typeof FormData !== "undefined" && value instanceof FormData;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function createAbortSignal(timeoutMs: number, external?: AbortSignal): AbortSignal {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -117,12 +121,27 @@ export async function httpRequest<T>(
       const isJson = contentType.includes("application/json");
 
       if (!response.ok) {
-        const payload = isJson ? await response.json().catch(() => undefined) : undefined;
+        const payload = isJson
+          ? await response.json().catch(() => undefined)
+          : await response.text().catch(() => undefined);
+
+        const nestedError = isRecord(payload) && isRecord(payload.error) ? payload.error : undefined;
+        const legacyErrorString = isRecord(payload) && typeof payload.error === "string" ? payload.error : undefined;
+        const textPayload = typeof payload === "string" ? payload : undefined;
         const message =
-          (payload as { error?: string } | undefined)?.error ??
+          (nestedError && typeof nestedError.message === "string" ? nestedError.message : undefined) ??
+          legacyErrorString ??
+          textPayload ??
           `Request failed with status ${response.status}`;
-        const code = (payload as { code?: string } | undefined)?.code;
-        throw new ApiHttpError(message, response.status, code, payload);
+
+        const code =
+          (nestedError && typeof nestedError.code === "string" ? nestedError.code : undefined) ??
+          (isRecord(payload) && typeof payload.code === "string" ? payload.code : undefined);
+
+        const normalizedPayload =
+          nestedError && "details" in nestedError ? nestedError.details : payload;
+
+        throw new ApiHttpError(message, response.status, code, normalizedPayload);
       }
 
       if (response.status === 204) {

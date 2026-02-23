@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 	platformmiddleware "github.com/joris-eng/tralytix/apps/api/internal/platform/middleware"
 )
 
@@ -41,10 +42,17 @@ func NewRouter(deps RouterDeps, handlers ...RouteRegistrar) http.Handler {
 		if deps.HealthCheck != nil {
 			if err := deps.HealthCheck(ctx); err != nil {
 				dbStatus = "down"
-				JSON(w, http.StatusServiceUnavailable, map[string]string{
-					"status": "degraded",
-					"db":     dbStatus,
-				})
+				platformerrors.WriteError(
+					w,
+					req,
+					http.StatusServiceUnavailable,
+					"SERVICE_UNAVAILABLE",
+					"service degraded",
+					map[string]string{
+						"status": "degraded",
+						"db":     dbStatus,
+					},
+				)
 				return
 			}
 		}
