@@ -69,3 +69,5 @@ Les commits doivent être petits, cohérents et réversibles.
 	•	Faciliter la revue, le rollback et la traçabilité.
 
 ⸻
+
+Checklist PR: branche=1 objectif, commits atomiques, make check local, PR claire, CI verte, merge seulement si protections OK.
