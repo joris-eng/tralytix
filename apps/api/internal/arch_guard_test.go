@@ -22,49 +22,56 @@ func TestArchitectureGuards(t *testing.T) {
 	pkgs := listPackages(t)
 
 	var violations []string
+
 	for _, pkg := range pkgs {
 		importer := pkg.ImportPath
 		importerModule, hasImporterModule := moduleNameFromImportPath(importer)
-		isCompositionRoot := strings.Contains(importer, "/cmd/") || strings.Contains(importer, "/internal/platform/")
 
+		isCompositionRoot :=
+			strings.Contains(importer, "/cmd/") ||
+				strings.Contains(importer, "/internal/platform/")
+
+		// RULE A: domain must not import platform or module infra
 		if domainModule, ok := domainModuleFromImportPath(importer); ok {
 			for _, imp := range pkg.Imports {
 				if containsPlatformImport(imp) {
 					violations = append(violations, fmt.Sprintf(
-						"Rule A violated: %s (domain module %s) must not import platform package %s",
+						"Rule A violated: %s (domain %s) must not import platform package %s",
 						importer, domainModule, imp,
 					))
 				}
-				if isModulesDataTransportDeliveryAdaptersImport(imp) {
+				if isModulesInfraImport(imp) {
 					violations = append(violations, fmt.Sprintf(
-						"Rule A violated: %s (domain module %s) must not import module infra package %s",
+						"Rule A violated: %s (domain %s) must not import module infra package %s",
 						importer, domainModule, imp,
 					))
 				}
 			}
 		}
 
+		// RULE B: usecase must not import module infra
 		if usecaseModule, ok := usecaseModuleFromImportPath(importer); ok {
 			for _, imp := range pkg.Imports {
-				if isModulesDataTransportDeliveryAdaptersImport(imp) {
+				if isModulesInfraImport(imp) {
 					violations = append(violations, fmt.Sprintf(
-						"Rule B violated: %s (usecase module %s) must not import module infra package %s",
+						"Rule B violated: %s (usecase %s) must not import module infra package %s",
 						importer, usecaseModule, imp,
 					))
 				}
 			}
 		}
 
-		// Conservative guard: we only enforce cross-module data imports when both
-		// importer and imported package are module-aware (under /internal/modules/).
+		// RULE C: cross-module data import forbidden (outside composition root)
 		for _, imp := range pkg.Imports {
-			importedModule, isImportedModuleData := dataModuleFromImportPath(imp)
-			if !isImportedModuleData || isCompositionRoot || !hasImporterModule {
+			importedModule, isImportedData := dataModuleFromImportPath(imp)
+
+			if !isImportedData || isCompositionRoot || !hasImporterModule {
 				continue
 			}
+
 			if importerModule != importedModule {
 				violations = append(violations, fmt.Sprintf(
-					"Rule C violated: %s must not import cross-module data package %s (importer module=%s, imported module=%s)",
+					"Rule C violated: %s must not import cross-module data %s (importer=%s imported=%s)",
 					importer, imp, importerModule, importedModule,
 				))
 			}
@@ -72,7 +79,7 @@ func TestArchitectureGuards(t *testing.T) {
 	}
 
 	if len(violations) > 0 {
-		t.Fatalf("architecture guard violations:\n- %s", strings.Join(violations, "\n- "))
+		t.Fatalf("architecture violations:\n- %s", strings.Join(violations, "\n- "))
 	}
 }
 
@@ -81,23 +88,25 @@ func listPackages(t *testing.T) []listedPackage {
 
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatal("cannot resolve current file path")
+		t.Fatal("cannot resolve file path")
 	}
+
 	moduleRoot := filepath.Clean(filepath.Join(filepath.Dir(thisFile), ".."))
 
 	cmd := exec.Command("go", "list", "-json", "./...")
 	cmd.Dir = moduleRoot
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
+		// Strict in CI, permissive locally
 		if os.Getenv("CI") == "true" || os.Getenv("GITHUB_ACTIONS") == "true" {
-			t.Fatalf("architecture guard failed in CI: go list failed: %v\n%s", err, string(out))
+			t.Fatalf("go list failed in CI: %v\n%s", err, string(out))
 		}
-		// Conservative behavior in local/dev: when package listing is unavailable
-		// (network/module issue), skip to avoid masking root failures.
-		t.Skipf("architecture guard skipped: go list failed: %v\n%s", err, string(out))
+		t.Skipf("go list skipped locally: %v\n%s", err, string(out))
 	}
 
 	dec := json.NewDecoder(bytes.NewReader(out))
+
 	var pkgs []listedPackage
 	for {
 		var p listedPackage
@@ -106,10 +115,11 @@ func listPackages(t *testing.T) []listedPackage {
 			break
 		}
 		if err != nil {
-			t.Fatalf("failed to decode go list output: %v", err)
+			t.Fatalf("decode error: %v", err)
 		}
 		pkgs = append(pkgs, p)
 	}
+
 	return pkgs
 }
 
@@ -139,17 +149,14 @@ func dataModuleFromImportPath(importPath string) (string, bool) {
 }
 
 func moduleNameFromImportPath(importPath string) (string, bool) {
-	const modulesPrefix = "/internal/modules/"
-	idx := strings.Index(importPath, modulesPrefix)
+	const prefix = "/internal/modules/"
+	idx := strings.Index(importPath, prefix)
 	if idx < 0 {
 		return "", false
 	}
 
-	rest := importPath[idx+len(modulesPrefix):]
+	rest := importPath[idx+len(prefix):]
 	parts := strings.Split(rest, "/")
-	if len(parts) < 2 {
-		return "", false
-	}
 
 	layerNames := map[string]struct{}{
 		"domain":      {},
@@ -170,14 +177,15 @@ func moduleNameFromImportPath(importPath string) (string, bool) {
 			return strings.Join(parts[:i], "/"), true
 		}
 	}
+
 	return "", false
 }
 
 func containsPlatformImport(importPath string) bool {
-	return strings.Contains(importPath, "/internal/platform/") || strings.HasSuffix(importPath, "/internal/platform")
+	return strings.Contains(importPath, "/internal/platform/")
 }
 
-func isModulesDataTransportDeliveryAdaptersImport(importPath string) bool {
+func isModulesInfraImport(importPath string) bool {
 	if !strings.Contains(importPath, "/internal/modules/") {
 		return false
 	}
@@ -188,5 +196,6 @@ func isModulesDataTransportDeliveryAdaptersImport(importPath string) bool {
 }
 
 func hasLayerSegment(importPath string, layer string) bool {
-	return strings.Contains(importPath, "/"+layer+"/") || strings.HasSuffix(importPath, "/"+layer)
+	return strings.Contains(importPath, "/"+layer+"/") ||
+		strings.HasSuffix(importPath, "/"+layer)
 }
