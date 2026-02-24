@@ -111,6 +111,7 @@ func main() {
 		mt5AnalyticsHandler,
 		mt5Handler,
 	)
+	router = platformmiddleware.RequestID(router)
 
 	server := httpx.NewServer(":"+cfg.Port, router, log)
 

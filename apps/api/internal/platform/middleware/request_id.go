@@ -16,10 +16,13 @@ func RequestID(next http.Handler) http.Handler {
 		reqID := r.Header.Get("X-Request-ID")
 		if reqID == "" {
 			reqID = newRequestID()
+			r.Header.Set("X-Request-ID", reqID)
 		}
 
 		ctx := context.WithValue(r.Context(), requestIDKey, reqID)
-		w.Header().Set("X-Request-ID", reqID)
+		if w.Header().Get("X-Request-ID") == "" {
+			w.Header().Set("X-Request-ID", reqID)
+		}
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
