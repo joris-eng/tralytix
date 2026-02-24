@@ -1,18 +1,14 @@
 package http
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"strings"
 
 	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 )
-
-type contextKey string
-
-const authUserIDKey contextKey = "auth_user_id"
 
 type AuthMiddleware struct {
 	loginDevUC *identityusecase.LoginDevUseCase
@@ -41,18 +37,7 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), authUserIDKey, session.UserID.String())
-		ctx = context.WithValue(ctx, "auth_user_id", session.UserID.String())
+		ctx := authctx.WithAuthUserID(r.Context(), session.UserID.String())
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-func AuthUserID(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value(authUserIDKey).(string)
-	return userID, ok
-}
-
-func WithAuthUserID(ctx context.Context, userID string) context.Context {
-	ctx = context.WithValue(ctx, authUserIDKey, userID)
-	return context.WithValue(ctx, "auth_user_id", userID)
 }
