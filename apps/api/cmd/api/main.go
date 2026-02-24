@@ -17,8 +17,8 @@ import (
 	identitytransport "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
 	mt5csv "github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/adapters/csv"
-	mt5postgres "github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/adapters/postgres"
 	mt5transport "github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/adapters/http"
+	mt5postgres "github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/adapters/postgres"
 	mt5application "github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/application"
 	marketdatapostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/marketdata/data/postgres"
 	marketdatatransport "github.com/joris-eng/tralytix/apps/api/internal/modules/marketdata/transport/http"
@@ -26,6 +26,7 @@ import (
 	tradingpostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/trading/data/postgres"
 	tradingtransport "github.com/joris-eng/tralytix/apps/api/internal/modules/trading/transport/http"
 	tradingusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/trading/usecase"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/config"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/db"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
@@ -66,7 +67,7 @@ func main() {
 	identityHandler := identitytransport.NewHandler(loginDevUC)
 	apiRateLimiter := platformmiddleware.NewRateLimiter(cfg.RateLimitRPM, time.Minute)
 	authRateLimitMW := apiRateLimiter.Middleware(func(r *http.Request) string {
-		if userID, ok := identitytransport.AuthUserID(r.Context()); ok && userID != "" {
+		if userID, ok := authctx.AuthUserID(r.Context()); ok && userID != "" {
 			return "user:" + userID
 		}
 		return ""

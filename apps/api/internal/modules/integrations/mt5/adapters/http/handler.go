@@ -8,16 +8,20 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	identityhttp "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/application"
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
+type authMiddleware interface {
+	RequireAuth(http.Handler) http.Handler
+}
+
 type Handler struct {
 	svc            service
-	authMW         *identityhttp.AuthMiddleware
+	authMW         authMiddleware
 	maxUploadBytes int64
 	rateLimitMW    func(http.Handler) http.Handler
 }
@@ -29,7 +33,7 @@ type service interface {
 
 func NewHandler(
 	svc service,
-	authMW *identityhttp.AuthMiddleware,
+	authMW authMiddleware,
 	maxUploadBytes int64,
 	rateLimitMW func(http.Handler) http.Handler,
 ) *Handler {
@@ -62,7 +66,7 @@ func (h *Handler) importCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return
@@ -107,7 +111,7 @@ func (h *Handler) importCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return

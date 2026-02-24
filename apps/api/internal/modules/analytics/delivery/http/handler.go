@@ -3,17 +3,21 @@ package http
 import (
 	"net/http"
 
-	identityhttp "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	analyticsusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/usecase"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
+
+type authMiddleware interface {
+	RequireAuth(http.Handler) http.Handler
+}
 
 type Handler struct {
 	summaryUC   *analyticsusecase.GetMT5SummaryUseCase
 	insightsUC  *analyticsusecase.GetMT5InsightsUseCase
 	recomputeUC *analyticsusecase.RecomputeDailyUseCase
-	authMW      *identityhttp.AuthMiddleware
+	authMW      authMiddleware
 	rateLimitMW func(http.Handler) http.Handler
 }
 
@@ -21,7 +25,7 @@ func NewHandler(
 	summaryUC *analyticsusecase.GetMT5SummaryUseCase,
 	insightsUC *analyticsusecase.GetMT5InsightsUseCase,
 	recomputeUC *analyticsusecase.RecomputeDailyUseCase,
-	authMW *identityhttp.AuthMiddleware,
+	authMW authMiddleware,
 	rateLimitMW func(http.Handler) http.Handler,
 ) *Handler {
 	return &Handler{
@@ -34,7 +38,7 @@ func NewHandler(
 }
 
 func (h *Handler) mt5Summary(w http.ResponseWriter, r *http.Request) {
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return
@@ -49,7 +53,7 @@ func (h *Handler) mt5Summary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) mt5Equity(w http.ResponseWriter, r *http.Request) {
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return
@@ -64,7 +68,7 @@ func (h *Handler) mt5Equity(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) recomputeDaily(w http.ResponseWriter, r *http.Request) {
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return
@@ -79,7 +83,7 @@ func (h *Handler) recomputeDaily(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) mt5Insights(w http.ResponseWriter, r *http.Request) {
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return

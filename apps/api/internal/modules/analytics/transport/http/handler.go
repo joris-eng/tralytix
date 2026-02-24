@@ -4,18 +4,22 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	identityhttp "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	analyticsusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/usecase"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
-type Handler struct {
-	uc     *analyticsusecase.UseCase
-	authMW *identityhttp.AuthMiddleware
+type authMiddleware interface {
+	RequireAuth(http.Handler) http.Handler
 }
 
-func NewHandler(uc *analyticsusecase.UseCase, authMW *identityhttp.AuthMiddleware) *Handler {
+type Handler struct {
+	uc     *analyticsusecase.UseCase
+	authMW authMiddleware
+}
+
+func NewHandler(uc *analyticsusecase.UseCase, authMW authMiddleware) *Handler {
 	return &Handler{
 		uc:     uc,
 		authMW: authMW,
@@ -30,7 +34,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 }
 
 func (h *Handler) summary(w http.ResponseWriter, r *http.Request) {
-	userID, ok := identityhttp.AuthUserID(r.Context())
+	userID, ok := authctx.AuthUserID(r.Context())
 	if !ok || userID == "" {
 		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
 		return

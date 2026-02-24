@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	identityhttp "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/application"
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/domain"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 )
 
 type fakeService struct {
@@ -46,7 +46,7 @@ func TestImportCSV_InvalidCSV_ReturnsBadRequest(t *testing.T) {
 	h := NewHandler(fakeService{importErr: application.ErrInvalidCSV}, nil, 10*1024*1024, nil)
 	req := httptest.NewRequest(http.MethodPost, "/v1/integrations/mt5/import", &body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req = req.WithContext(identityhttp.WithAuthUserID(req.Context(), "user-1"))
+	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
 	rr := httptest.NewRecorder()
 
 	h.importCSV(rr, req)
