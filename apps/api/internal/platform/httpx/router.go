@@ -34,6 +34,11 @@ func NewRouter(deps RouterDeps, handlers ...RouteRegistrar) http.Handler {
 	r.Use(platformmiddleware.Logging(deps.Logger))
 	r.Use(platformmiddleware.Timeout(deps.RequestTimeout))
 
+	r.Get("/", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write([]byte("Tralytix API is running"))
+	})
+
 	r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
 		ctx, cancel := context.WithTimeout(req.Context(), 2*time.Second)
 		defer cancel()
