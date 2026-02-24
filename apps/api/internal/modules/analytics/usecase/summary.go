@@ -5,11 +5,10 @@ import (
 	"fmt"
 
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/domain"
-	tradingdomain "github.com/joris-eng/tralytix/apps/api/internal/modules/trading/domain"
 )
 
 type TradeReader interface {
-	ListByUser(ctx context.Context, userID string, limit, offset int32) ([]tradingdomain.Trade, error)
+	ListByUser(ctx context.Context, userID string, limit, offset int32) ([]domain.Trade, error)
 }
 
 type UseCase struct {
@@ -68,7 +67,7 @@ func (uc *UseCase) SummaryByUser(ctx context.Context, userID string) (domain.Sum
 	}, nil
 }
 
-func computePnL(t tradingdomain.Trade) float64 {
+func computePnL(t domain.Trade) float64 {
 	if t.ExitPrice == nil {
 		return 0
 	}

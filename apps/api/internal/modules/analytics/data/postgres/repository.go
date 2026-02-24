@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	analyticsdomain "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/domain"
-	tradingdomain "github.com/joris-eng/tralytix/apps/api/internal/modules/trading/domain"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/db"
 )
 
@@ -21,7 +20,7 @@ func NewRepository(q *db.Queries) *Repository {
 	return &Repository{q: q}
 }
 
-func (r *Repository) ListByUser(ctx context.Context, userID string, limit, offset int32) ([]tradingdomain.Trade, error) {
+func (r *Repository) ListByUser(ctx context.Context, userID string, limit, offset int32) ([]analyticsdomain.Trade, error) {
 	uid, err := uuid.Parse(userID)
 	if err != nil {
 		return nil, fmt.Errorf("parse user id: %w", err)
@@ -35,26 +34,21 @@ func (r *Repository) ListByUser(ctx context.Context, userID string, limit, offse
 	if err != nil {
 		return nil, fmt.Errorf("query trades by user: %w", err)
 	}
-	out := make([]tradingdomain.Trade, 0, len(rows))
+	out := make([]analyticsdomain.Trade, 0, len(rows))
 	for _, t := range rows {
 		out = append(out, mapTrade(t))
 	}
 	return out, nil
 }
 
-func mapTrade(t db.Trade) tradingdomain.Trade {
-	return tradingdomain.Trade{
-		ID:           t.ID.String(),
-		UserID:       t.UserID.String(),
-		InstrumentID: t.InstrumentID.String(),
-		Side:         t.Side,
-		Qty:          numericToFloat64(t.Qty),
-		EntryPrice:   numericToFloat64(t.EntryPrice),
-		ExitPrice:    numericToFloat64Ptr(t.ExitPrice),
-		OpenedAt:     t.OpenedAt,
-		ClosedAt:     timestamptzToTimePtr(t.ClosedAt),
-		Fees:         numericToFloat64(t.Fees),
-		Notes:        textToStringPtr(t.Notes),
+func mapTrade(t db.Trade) analyticsdomain.Trade {
+	return analyticsdomain.Trade{
+		Side:       t.Side,
+		Qty:        numericToFloat64(t.Qty),
+		EntryPrice: numericToFloat64(t.EntryPrice),
+		ExitPrice:  numericToFloat64Ptr(t.ExitPrice),
+		ClosedAt:   timestamptzToTimePtr(t.ClosedAt),
+		Fees:       numericToFloat64(t.Fees),
 	}
 }
 
