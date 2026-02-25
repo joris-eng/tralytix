@@ -10,7 +10,11 @@ export class ApiError extends Error {
   }
 }
 
-type ApiFetchOptions = Omit<RequestInit, "headers"> & {
+type ApiRequestBody = BodyInit | Record<string, unknown>;
+
+type ApiFetchOptions = Omit<RequestInit, "headers" | "body"> & {
+  method?: string;
+  body?: ApiRequestBody;
   token?: string;
   headers?: HeadersInit;
 };
@@ -56,8 +60,29 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     headers.set("Authorization", `Bearer ${options.token}`);
   }
 
+  let requestBody: BodyInit | undefined;
+  if (options.body !== undefined && options.body !== null) {
+    if (
+      typeof options.body === "string" ||
+      options.body instanceof Blob ||
+      options.body instanceof ArrayBuffer ||
+      ArrayBuffer.isView(options.body) ||
+      options.body instanceof URLSearchParams ||
+      options.body instanceof FormData ||
+      options.body instanceof ReadableStream
+    ) {
+      requestBody = options.body as BodyInit;
+    } else {
+      if (!headers.has("Content-Type")) {
+        headers.set("Content-Type", "application/json");
+      }
+      requestBody = JSON.stringify(options.body);
+    }
+  }
+
   const response = await fetch(`${API_BASE_URL}${normalizePath(path)}`, {
     ...options,
+    body: requestBody,
     headers
   });
 

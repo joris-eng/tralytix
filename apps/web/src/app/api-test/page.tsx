@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { TokenInput } from "@/components/TokenInput";
 import { ApiError, apiFetch } from "@/lib/api";
+import { clearToken, setToken as saveToken } from "@/lib/auth";
 
 type HealthResponse = {
   status?: string;
@@ -19,6 +20,7 @@ function formatUnknown(value: unknown): string {
 }
 
 export default function ApiTestPage() {
+  const [tokenInputKey, setTokenInputKey] = useState<number>(0);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string>("");
   const [token, setToken] = useState<string>("");
@@ -72,6 +74,19 @@ export default function ApiTestPage() {
     }
   }
 
+  function onSaveToken() {
+    if (!token.trim()) {
+      return;
+    }
+    saveToken(token.trim());
+  }
+
+  function onClearToken() {
+    clearToken();
+    setToken("");
+    setTokenInputKey((prev) => prev + 1);
+  }
+
   return (
     <main>
       <h1>API Test</h1>
@@ -89,7 +104,14 @@ export default function ApiTestPage() {
 
       <section>
         <h2>Trades</h2>
-        <TokenInput id="api-test-token" onTokenChange={setToken} />
+        <TokenInput key={tokenInputKey} id="api-test-token" onTokenChange={setToken} />
+        {token.trim() ? <p>Token ok</p> : <p>No token</p>}
+        <button type="button" onClick={onSaveToken} disabled={!token.trim()}>
+          Save token
+        </button>
+        <button type="button" onClick={onClearToken}>
+          Clear token
+        </button>
         <button type="button" onClick={() => void onLoadTrades()} disabled={loadingTrades}>
           {loadingTrades ? "Loading..." : "Load trades"}
         </button>
