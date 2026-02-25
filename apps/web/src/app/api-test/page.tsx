@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { TokenInput } from "@/components/TokenInput";
 import { ApiError, apiFetch } from "@/lib/api";
 
 type HealthResponse = {
@@ -88,15 +89,7 @@ export default function ApiTestPage() {
 
       <section>
         <h2>Trades</h2>
-        <label htmlFor="token">Token</label>
-        <input
-          id="token"
-          type="text"
-          value={token}
-          onChange={(event) => setToken(event.target.value)}
-          placeholder="Bearer token"
-          style={{ width: "100%", marginBottom: 8 }}
-        />
+        <TokenInput id="api-test-token" onTokenChange={setToken} />
         <button type="button" onClick={() => void onLoadTrades()} disabled={loadingTrades}>
           {loadingTrades ? "Loading..." : "Load trades"}
         </button>
