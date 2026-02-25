@@ -2,34 +2,36 @@
 
 import { useEffect, useState } from "react";
 
-const TOKEN_STORAGE_KEY = "tralytix_token";
+import { getToken, setToken as persistToken } from "@/lib/auth";
 
 type TokenInputProps = {
   id?: string;
   label?: string;
   onTokenChange?: (value: string) => void;
+  onRememberChange?: (value: boolean) => void;
 };
 
 export function TokenInput({
   id = "token",
   label = "Token",
-  onTokenChange
+  onTokenChange,
+  onRememberChange
 }: TokenInputProps) {
   const [token, setToken] = useState<string>("");
+  const [remember, setRemember] = useState<boolean>(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const stored = window.localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
+    const stored = getToken() ?? "";
     setToken(stored);
     onTokenChange?.(stored);
-  }, [onTokenChange]);
+    setRemember(true);
+    onRememberChange?.(true);
+  }, [onRememberChange, onTokenChange]);
 
   function handleChange(value: string) {
     setToken(value);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(TOKEN_STORAGE_KEY, value);
+    if (remember) {
+      persistToken(value);
     }
     onTokenChange?.(value);
   }
@@ -45,6 +47,19 @@ export function TokenInput({
         placeholder="Bearer token"
         style={{ width: "100%", marginBottom: 8 }}
       />
+      <label htmlFor={`${id}-remember`}>
+        <input
+          id={`${id}-remember`}
+          type="checkbox"
+          checked={remember}
+          onChange={(event) => {
+            const nextRemember = event.target.checked;
+            setRemember(nextRemember);
+            onRememberChange?.(nextRemember);
+          }}
+        />
+        Remember
+      </label>
     </>
   );
 }
