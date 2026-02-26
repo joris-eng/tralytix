@@ -15,7 +15,7 @@ Backend expected: `http://localhost:8080` with API prefix `/v1`.
 
 ## Environment variables
 
-- `NEXT_PUBLIC_API_BASE=http://localhost:8080/v1`
+- `API_BASE_URL=http://localhost:8080`
 
 ## Dev login flow
 
