@@ -19,12 +19,7 @@ type ApiFetchOptions = Omit<RequestInit, "headers" | "body"> & {
   headers?: HeadersInit;
 };
 
-const LOCAL_API_BASE_URL = "http://localhost:8080";
-const PROD_API_BASE_URL = "https://tralytix.onrender.com";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
-  (process.env.NODE_ENV === "production" ? PROD_API_BASE_URL : LOCAL_API_BASE_URL);
+const API_PROXY_BASE_URL = "/api/backend";
 
 function normalizePath(path: string): string {
   if (!path) {
@@ -80,7 +75,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}${normalizePath(path)}`, {
+  const response = await fetch(`${API_PROXY_BASE_URL}${normalizePath(path)}`, {
     ...options,
     body: requestBody,
     headers
