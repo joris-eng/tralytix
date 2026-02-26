@@ -6,8 +6,8 @@ const nextConfig = {
     const origin = base.replace(/\/v1\/?$/, "");
     return [
       {
-        source: "/api/:path*",
-        destination: `${origin}/:path*`
+        source: "/api/v1/:path*",
+        destination: `${origin}/v1/:path*`
       }
     ];
   }

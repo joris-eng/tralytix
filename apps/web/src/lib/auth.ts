@@ -18,6 +18,8 @@ export function setToken(token: string): void {
   }
   const value = token.trim();
   window.localStorage.setItem(TOKEN_KEY, value);
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${TOKEN_KEY}=${value}; Path=/; SameSite=Lax; Max-Age=2592000${secure}`;
 }
 
 export function clearToken(): void {
@@ -25,4 +27,6 @@ export function clearToken(): void {
     return;
   }
   window.localStorage.removeItem(TOKEN_KEY);
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${TOKEN_KEY}=; Path=/; SameSite=Lax; Max-Age=0${secure}`;
 }
