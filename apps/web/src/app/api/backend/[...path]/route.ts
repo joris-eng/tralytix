@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE =
+  process.env.API_BASE_URL ??
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:8080"
+    : undefined);
 const TIMEOUT_MS = 15000;
 
-if (!API_BASE) {
-  throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
-}
-
 async function handler(req: NextRequest, context: { params: { path: string[] } }) {
+  if (!API_BASE) {
+    return NextResponse.json(
+      { error: { message: "Backend not configured" } },
+      { status: 500 }
+    );
+  }
+
   const { path } = context.params;
   const normalizedPath = path[0] === "backend" ? path.slice(1) : path;
 
