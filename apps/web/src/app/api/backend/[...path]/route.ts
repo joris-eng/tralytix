@@ -1,20 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getApiBaseUrl } from "@/lib/env.server";
 
-const API_BASE = process.env.API_BASE_URL;
 const TIMEOUT_MS = 15000;
 
 async function handler(req: NextRequest, context: { params: { path: string[] } }) {
-  if (!API_BASE) {
-    return NextResponse.json(
-      { error: { message: "Backend not configured" } },
-      { status: 500 }
-    );
-  }
+  const apiBase = getApiBaseUrl();
 
   const { path } = context.params;
   const normalizedPath = path[0] === "backend" ? path.slice(1) : path;
 
-  const targetUrl = new URL("/" + normalizedPath.join("/"), API_BASE);
+  const targetUrl = new URL("/" + normalizedPath.join("/"), apiBase);
   targetUrl.search = req.nextUrl.search;
 
   const headers = new Headers();
