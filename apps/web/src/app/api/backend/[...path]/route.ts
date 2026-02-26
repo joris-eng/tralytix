@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_BASE =
-  process.env.API_BASE_URL ??
-  (process.env.NODE_ENV === "development"
-    ? "http://localhost:8080"
-    : undefined);
+const API_BASE = process.env.API_BASE_URL;
 const TIMEOUT_MS = 15000;
 
 async function handler(req: NextRequest, context: { params: { path: string[] } }) {

@@ -35,17 +35,20 @@ export type HttpClientConfig = {
 
 function buildUrl(baseUrl: string, path: string, query?: HttpQuery): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  const url = new URL(`${baseUrl.replace(/\/$/, "")}${normalizedPath}`);
-  if (!query) {
-    return url.toString();
+  const base = baseUrl.replace(/\/$/, "");
+  const target = `${base}${normalizedPath}`;
+  if (!query || Object.keys(query).length === 0) {
+    return target;
   }
+  const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
     if (value === null || value === undefined) {
       continue;
     }
-    url.searchParams.set(key, String(value));
+    params.set(key, String(value));
   }
-  return url.toString();
+  const queryString = params.toString();
+  return queryString ? `${target}?${queryString}` : target;
 }
 
 function isFormData(value: unknown): value is FormData {
