@@ -8,20 +8,30 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
-type Handler struct {
-	loginDevUC *identityusecase.LoginDevUseCase
+type authMiddleware interface {
+	RequireAuth(http.Handler) http.Handler
 }
 
-func NewHandler(loginDevUC *identityusecase.LoginDevUseCase) *Handler {
-	return &Handler{loginDevUC: loginDevUC}
+type Handler struct {
+	loginDevUC *identityusecase.LoginDevUseCase
+	authMW     authMiddleware
+}
+
+func NewHandler(loginDevUC *identityusecase.LoginDevUseCase, authMW authMiddleware) *Handler {
+	return &Handler{loginDevUC: loginDevUC, authMW: authMW}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Post("/auth/dev-login", h.devLogin)
+	r.Group(func(sr chi.Router) {
+		sr.Use(h.authMW.RequireAuth)
+		sr.Get("/auth/me", h.me)
+	})
 }
 
 type devLoginRequest struct {
@@ -30,6 +40,10 @@ type devLoginRequest struct {
 
 type devLoginResponse struct {
 	Token string `json:"token"`
+}
+
+type meResponse struct {
+	UserID string `json:"user_id"`
 }
 
 func (h *Handler) devLogin(w http.ResponseWriter, r *http.Request) {
@@ -61,4 +75,14 @@ func (h *Handler) devLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.JSON(w, http.StatusOK, devLoginResponse{Token: token})
+}
+
+func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authctx.AuthUserID(r.Context())
+	if !ok || userID == "" {
+		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	httpx.JSON(w, http.StatusOK, meResponse{UserID: userID})
 }

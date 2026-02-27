@@ -64,7 +64,7 @@ func main() {
 	identityRepo := identitypostgres.NewRepository(queries)
 	loginDevUC := identityusecase.NewLoginDevUseCase(identityRepo, identityRepo, clock, 24*time.Hour)
 	authMW := identitytransport.NewAuthMiddleware(loginDevUC)
-	identityHandler := identitytransport.NewHandler(loginDevUC)
+	identityHandler := identitytransport.NewHandler(loginDevUC, authMW)
 	apiRateLimiter := platformmiddleware.NewRateLimiter(cfg.RateLimitRPM, time.Minute)
 	authRateLimitMW := apiRateLimiter.Middleware(func(r *http.Request) string {
 		if userID, ok := authctx.AuthUserID(r.Context()); ok && userID != "" {
