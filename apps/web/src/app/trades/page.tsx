@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ApiError, apiFetch } from "@/lib/api";
+import { fetchAuthMe } from "@/lib/authApi";
 import { clearToken, getToken } from "@/lib/auth";
 import { isUnauthorized } from "@/lib/apiErrors";
 
@@ -49,6 +50,11 @@ export default function TradesPage() {
       }
 
       try {
+        await fetchAuthMe(token);
+        if (cancelled) {
+          return;
+        }
+
         const data = await apiFetch<TradesResponse>("/v1/trades", { token });
         if (cancelled) {
           return;

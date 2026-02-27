@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { TokenInput } from "@/components/TokenInput";
 import { ApiError, apiFetch } from "@/lib/api";
+import { fetchAuthMe } from "@/lib/authApi";
 import { clearToken, setToken as saveToken } from "@/lib/auth";
 
 type HealthResponse = {
@@ -27,6 +28,9 @@ export default function ApiTestPage() {
   const [tradesJSON, setTradesJSON] = useState<string>("");
   const [tradesError, setTradesError] = useState<string>("");
   const [loadingTrades, setLoadingTrades] = useState<boolean>(false);
+  const [meJSON, setMeJSON] = useState<string>("");
+  const [meError, setMeError] = useState<string>("");
+  const [loadingMe, setLoadingMe] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +78,35 @@ export default function ApiTestPage() {
     }
   }
 
+  async function onLoadMe() {
+    setLoadingMe(true);
+    setMeError("");
+    setMeJSON("");
+
+    const rawToken = token.trim();
+    if (!rawToken) {
+      setMeError("Missing token");
+      setLoadingMe(false);
+      return;
+    }
+
+    try {
+      const data = await fetchAuthMe(rawToken);
+      setMeJSON(formatUnknown(data));
+    } catch (error: unknown) {
+      if (error instanceof ApiError) {
+        setMeError(`${error.message} (${error.status})`);
+        if (error.payload !== undefined) {
+          setMeJSON(formatUnknown(error.payload));
+        }
+      } else {
+        setMeError("Unable to load /v1/auth/me");
+      }
+    } finally {
+      setLoadingMe(false);
+    }
+  }
+
   function onSaveToken() {
     if (!token.trim()) {
       return;
@@ -115,8 +148,13 @@ export default function ApiTestPage() {
         <button type="button" onClick={() => void onLoadTrades()} disabled={loadingTrades}>
           {loadingTrades ? "Loading..." : "Load trades"}
         </button>
+        <button type="button" onClick={() => void onLoadMe()} disabled={loadingMe}>
+          {loadingMe ? "Loading..." : "Load me"}
+        </button>
         {tradesError ? <p>{tradesError}</p> : null}
         {tradesJSON ? <pre>{tradesJSON}</pre> : null}
+        {meError ? <p>{meError}</p> : null}
+        {meJSON ? <pre>{meJSON}</pre> : null}
       </section>
     </main>
   );
