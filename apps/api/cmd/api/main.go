@@ -49,6 +49,8 @@ func main() {
 	log = log.With(
 		"service", cfg.Name,
 		"version", cfg.Version,
+		"commit", cfg.Commit,
+		"built_at", cfg.BuiltAt,
 		"started_at", clock.Now().Format(time.RFC3339),
 	)
 
@@ -99,6 +101,8 @@ func main() {
 			Logger:         log,
 			Name:           cfg.Name,
 			Version:        cfg.Version,
+			Commit:         cfg.Commit,
+			BuiltAt:        cfg.BuiltAt,
 			RequestTimeout: time.Duration(cfg.HTTPTimeoutSec) * time.Second,
 			HealthCheck: func(ctx context.Context) error {
 				return dbClient.Pool().Ping(ctx)

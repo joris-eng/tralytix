@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { clearToken } from "@/shared/auth/token";
+import { clearToken } from "@/lib/auth";
 
 export function LogoutButton() {
   const router = useRouter();

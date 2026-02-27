@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { clearToken } from "@/shared/auth/token";
+import { clearToken } from "@/lib/auth";
 import { devLogin } from "@/features/auth/api";
 
 export function useDevLogin() {

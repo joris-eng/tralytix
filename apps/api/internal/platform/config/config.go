@@ -9,6 +9,8 @@ import (
 type Config struct {
 	Name              string
 	Version           string
+	Commit            string
+	BuiltAt           string
 	Port              string
 	DBDSN             string
 	MT5ImportMaxBytes int64
@@ -20,7 +22,9 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		Name:              "trading-saas-api",
-		Version:           "0.1.0",
+		Version:           getenv("APP_VERSION", "0.1.0"),
+		Commit:            getenv("APP_COMMIT", "dev"),
+		BuiltAt:           getenv("APP_BUILT_AT", "unknown"),
 		Port:              getenv("PORT", "8080"),
 		DBDSN:             os.Getenv("DB_DSN"),
 		MT5ImportMaxBytes: getenvInt64("MT5_IMPORT_MAX_BYTES", 10*1024*1024),

@@ -1,4 +1,4 @@
-import { getToken } from "@/shared/auth/token";
+import { getToken } from "@/lib/auth";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
