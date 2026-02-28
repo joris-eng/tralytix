@@ -33,7 +33,4 @@ services:
     startCommand: pnpm start -p $PORT
     envVars:
       - key: API_BASE_URL
-        fromService:
-          type: web
-          name: tralytix-api
-          property: url
+        value: https://tralytix-api.onrender.com
