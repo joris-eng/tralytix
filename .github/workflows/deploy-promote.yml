@@ -14,6 +14,46 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Validate staging secrets format
+        shell: bash
+        run: |
+          set -euo pipefail
+          API_HOOK="${{ secrets.STAGING_API_DEPLOY_HOOK }}"
+          WEB_HOOK="${{ secrets.STAGING_WEB_DEPLOY_HOOK }}"
+          API_URL="${{ secrets.STAGING_API_URL }}"
+          WEB_URL="${{ secrets.STAGING_WEB_URL }}"
+
+          for pair in \
+            "STAGING_API_DEPLOY_HOOK:${API_HOOK}" \
+            "STAGING_WEB_DEPLOY_HOOK:${WEB_HOOK}" \
+            "STAGING_API_URL:${API_URL}" \
+            "STAGING_WEB_URL:${WEB_URL}"; do
+            KEY="${pair%%:*}"
+            VALUE="${pair#*:}"
+
+            if [[ -z "${VALUE}" ]]; then
+              echo "Secret ${KEY} is empty or missing."
+              exit 1
+            fi
+            if [[ ! "${VALUE}" =~ ^https:// ]]; then
+              echo "Secret ${KEY} must start with https://"
+              exit 1
+            fi
+            if [[ "${VALUE}" =~ https://https// ]]; then
+              echo "Secret ${KEY} has malformed URL (double https)."
+              exit 1
+            fi
+          done
+
+          if [[ ! "${API_HOOK}" =~ ^https://api\.render\.com/deploy/ ]]; then
+            echo "STAGING_API_DEPLOY_HOOK is not a Render deploy hook URL."
+            exit 1
+          fi
+          if [[ ! "${WEB_HOOK}" =~ ^https://api\.render\.com/deploy/ ]]; then
+            echo "STAGING_WEB_DEPLOY_HOOK is not a Render deploy hook URL."
+            exit 1
+          fi
+
       - name: Trigger Render deploy hooks (staging)
         shell: bash
         run: |
@@ -32,6 +72,46 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Validate production secrets format
+        shell: bash
+        run: |
+          set -euo pipefail
+          API_HOOK="${{ secrets.PRODUCTION_API_DEPLOY_HOOK }}"
+          WEB_HOOK="${{ secrets.PRODUCTION_WEB_DEPLOY_HOOK }}"
+          API_URL="${{ secrets.PRODUCTION_API_URL }}"
+          WEB_URL="${{ secrets.PRODUCTION_WEB_URL }}"
+
+          for pair in \
+            "PRODUCTION_API_DEPLOY_HOOK:${API_HOOK}" \
+            "PRODUCTION_WEB_DEPLOY_HOOK:${WEB_HOOK}" \
+            "PRODUCTION_API_URL:${API_URL}" \
+            "PRODUCTION_WEB_URL:${WEB_URL}"; do
+            KEY="${pair%%:*}"
+            VALUE="${pair#*:}"
+
+            if [[ -z "${VALUE}" ]]; then
+              echo "Secret ${KEY} is empty or missing."
+              exit 1
+            fi
+            if [[ ! "${VALUE}" =~ ^https:// ]]; then
+              echo "Secret ${KEY} must start with https://"
+              exit 1
+            fi
+            if [[ "${VALUE}" =~ https://https// ]]; then
+              echo "Secret ${KEY} has malformed URL (double https)."
+              exit 1
+            fi
+          done
+
+          if [[ ! "${API_HOOK}" =~ ^https://api\.render\.com/deploy/ ]]; then
+            echo "PRODUCTION_API_DEPLOY_HOOK is not a Render deploy hook URL."
+            exit 1
+          fi
+          if [[ ! "${WEB_HOOK}" =~ ^https://api\.render\.com/deploy/ ]]; then
+            echo "PRODUCTION_WEB_DEPLOY_HOOK is not a Render deploy hook URL."
+            exit 1
+          fi
 
       - name: Trigger Render deploy hooks (production)
         shell: bash
