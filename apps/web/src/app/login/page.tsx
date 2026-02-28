@@ -58,6 +58,7 @@ export default function LoginPage() {
   return (
     <main>
       <h1>Login (dev)</h1>
+      <p className="muted">Dev login can be disabled by backend configuration in production.</p>
       <form onSubmit={(event) => void onSubmit(event)}>
         <label htmlFor="email">Email</label>
         <input

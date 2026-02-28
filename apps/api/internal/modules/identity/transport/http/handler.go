@@ -18,12 +18,13 @@ type authMiddleware interface {
 }
 
 type Handler struct {
-	loginDevUC *identityusecase.LoginDevUseCase
-	authMW     authMiddleware
+	loginDevUC     *identityusecase.LoginDevUseCase
+	authMW         authMiddleware
+	enableDevLogin bool
 }
 
-func NewHandler(loginDevUC *identityusecase.LoginDevUseCase, authMW authMiddleware) *Handler {
-	return &Handler{loginDevUC: loginDevUC, authMW: authMW}
+func NewHandler(loginDevUC *identityusecase.LoginDevUseCase, authMW authMiddleware, enableDevLogin bool) *Handler {
+	return &Handler{loginDevUC: loginDevUC, authMW: authMW, enableDevLogin: enableDevLogin}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
@@ -47,6 +48,10 @@ type meResponse struct {
 }
 
 func (h *Handler) devLogin(w http.ResponseWriter, r *http.Request) {
+	if !h.enableDevLogin {
+		platformerrors.WriteHTTP(w, http.StatusForbidden, "dev login is disabled")
+		return
+	}
 	if r.Body == nil || r.Body == http.NoBody {
 		platformerrors.WriteHTTP(w, http.StatusBadRequest, "request body is required")
 		return

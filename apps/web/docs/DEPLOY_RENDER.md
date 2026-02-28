@@ -37,7 +37,7 @@ Expected web commands:
 ### Web (`tralytix-web`)
 - `API_BASE_URL` (server-only)
   - Example (Render): `https://tralytix-api.onrender.com`
-  - In blueprint it is sourced automatically from the API service URL.
+  - In blueprint it is set explicitly to the API service URL.
 
 Do not expose backend routing via public env vars.
 
@@ -48,6 +48,7 @@ Do not expose backend routing via public env vars.
   - `MT5_IMPORT_MAX_ROWS` (default `20000`)
   - `HTTP_TIMEOUT_SEC` (default `15`)
   - `RATE_LIMIT_RPM` (default `100`)
+  - `ENABLE_DEV_LOGIN` (recommended `false` in production)
 
 ## 5) Verification after deploy
 

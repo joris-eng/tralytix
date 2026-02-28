@@ -36,7 +36,11 @@ Render -> **New** -> **Blueprint**:
 
 ### API (`*-api`)
 - `DB_DSN` (from managed Postgres in blueprint)
-- Optional: `MT5_IMPORT_MAX_BYTES`, `MT5_IMPORT_MAX_ROWS`, `HTTP_TIMEOUT_SEC`, `RATE_LIMIT_RPM`
+- Optional: `MT5_IMPORT_MAX_BYTES`, `MT5_IMPORT_MAX_ROWS`, `HTTP_TIMEOUT_SEC`, `RATE_LIMIT_RPM`, `ENABLE_DEV_LOGIN`
+
+Recommended value:
+- Staging: `ENABLE_DEV_LOGIN=true`
+- Production: `ENABLE_DEV_LOGIN=false`
 
 ### WEB (`*-web`)
 - `API_BASE_URL` (server-only), example:
