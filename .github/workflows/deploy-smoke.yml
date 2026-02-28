@@ -36,15 +36,30 @@ jobs:
           echo "web_url=${{ secrets.STAGING_WEB_URL }}" >> "$GITHUB_OUTPUT"
           echo "api_url=${{ secrets.STAGING_API_URL }}" >> "$GITHUB_OUTPUT"
 
-      - name: Validate smoke URLs exist
+      - name: Validate smoke URLs format
         shell: bash
         run: |
-          if [[ -z "${{ steps.env.outputs.web_url }}" ]]; then
+          WEB_URL="${{ steps.env.outputs.web_url }}"
+          API_URL="${{ steps.env.outputs.api_url }}"
+
+          if [[ -z "${WEB_URL}" ]]; then
             echo "Missing web URL secret for selected environment."
             exit 1
           fi
-          if [[ -z "${{ steps.env.outputs.api_url }}" ]]; then
+          if [[ -z "${API_URL}" ]]; then
             echo "Missing api URL secret for selected environment."
+            exit 1
+          fi
+          if [[ ! "${WEB_URL}" =~ ^https:// ]]; then
+            echo "Web URL must start with https://"
+            exit 1
+          fi
+          if [[ ! "${API_URL}" =~ ^https:// ]]; then
+            echo "API URL must start with https://"
+            exit 1
+          fi
+          if [[ "${WEB_URL}" =~ https://https// || "${API_URL}" =~ https://https// ]]; then
+            echo "Malformed URL detected (double https)."
             exit 1
           fi
 
