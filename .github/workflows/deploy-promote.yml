@@ -1,0 +1,46 @@
+name: deploy-promote
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+
+jobs:
+  deploy-staging:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger Render deploy hooks (staging)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --fail -X POST "${{ secrets.STAGING_API_DEPLOY_HOOK }}"
+          curl --silent --show-error --fail -X POST "${{ secrets.STAGING_WEB_DEPLOY_HOOK }}"
+
+      - name: Run staging smoke checks
+        shell: bash
+        run: |
+          bash scripts/smoke-deploy.sh "${{ secrets.STAGING_WEB_URL }}" "${{ secrets.STAGING_API_URL }}"
+
+  deploy-production:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger Render deploy hooks (production)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --silent --show-error --fail -X POST "${{ secrets.PRODUCTION_API_DEPLOY_HOOK }}"
+          curl --silent --show-error --fail -X POST "${{ secrets.PRODUCTION_WEB_DEPLOY_HOOK }}"
+
+      - name: Run production smoke checks
+        shell: bash
+        run: |
+          bash scripts/smoke-deploy.sh "${{ secrets.PRODUCTION_WEB_URL }}" "${{ secrets.PRODUCTION_API_URL }}"

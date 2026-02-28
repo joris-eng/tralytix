@@ -1,5 +1,5 @@
 import { apiClient } from "@/shared/api/apiClient";
-import { clearToken, setToken } from "@/shared/auth/token";
+import { clearToken, setToken } from "@/lib/auth";
 import { devLoginResponseSchema, type DevLoginResponseModel } from "@/features/auth/model";
 
 export async function devLogin(email: string): Promise<DevLoginResponseModel> {

@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDevLogin } from "@/features/auth/hooks";
-import { getToken } from "@/shared/auth/token";
+import { getToken } from "@/lib/auth";
 import { ApiError } from "@/shared/ui/ApiError";
 
 export function DevLoginForm() {

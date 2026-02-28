@@ -19,6 +19,8 @@ type RouterDeps struct {
 	Logger         *slog.Logger
 	Name           string
 	Version        string
+	Commit         string
+	BuiltAt        string
 	RequestTimeout time.Duration
 	HealthCheck    func(ctx context.Context) error
 }
@@ -71,6 +73,8 @@ func NewRouter(deps RouterDeps, handlers ...RouteRegistrar) http.Handler {
 		JSON(w, http.StatusOK, map[string]string{
 			"name":    deps.Name,
 			"version": deps.Version,
+			"commit":  deps.Commit,
+			"builtAt": deps.BuiltAt,
 		})
 	})
 
