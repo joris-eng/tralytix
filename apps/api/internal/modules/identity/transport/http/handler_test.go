@@ -28,7 +28,7 @@ func (denyAuthMW) RequireAuth(next http.Handler) http.Handler {
 }
 
 func TestHandler_Me_UnauthorizedWhenMiddlewareRejects(t *testing.T) {
-	h := NewHandler(nil, denyAuthMW{})
+	h := NewHandler(nil, denyAuthMW{}, true)
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
 
@@ -42,7 +42,7 @@ func TestHandler_Me_UnauthorizedWhenMiddlewareRejects(t *testing.T) {
 }
 
 func TestHandler_Me_ReturnsUserID(t *testing.T) {
-	h := NewHandler(nil, allowAuthMW{})
+	h := NewHandler(nil, allowAuthMW{}, true)
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
 
@@ -60,5 +60,20 @@ func TestHandler_Me_ReturnsUserID(t *testing.T) {
 	}
 	if got := body["user_id"]; got != "user-123" {
 		t.Fatalf("expected user_id %q, got %q", "user-123", got)
+	}
+}
+
+func TestHandler_DevLogin_Disabled_ReturnsForbidden(t *testing.T) {
+	h := NewHandler(nil, allowAuthMW{}, false)
+	r := chi.NewRouter()
+	h.RegisterRoutes(r)
+
+	req := httptest.NewRequest(http.MethodPost, "/auth/dev-login", nil)
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	r.ServeHTTP(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rr.Code)
 	}
 }

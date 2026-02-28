@@ -11,6 +11,7 @@ type Config struct {
 	Version           string
 	Commit            string
 	BuiltAt           string
+	EnableDevLogin    bool
 	Port              string
 	DBDSN             string
 	MT5ImportMaxBytes int64
@@ -25,6 +26,7 @@ func Load() (Config, error) {
 		Version:           getenv("APP_VERSION", "0.1.0"),
 		Commit:            getenv("APP_COMMIT", "dev"),
 		BuiltAt:           getenv("APP_BUILT_AT", "unknown"),
+		EnableDevLogin:    getenvBool("ENABLE_DEV_LOGIN", false),
 		Port:              getenv("PORT", "8080"),
 		DBDSN:             os.Getenv("DB_DSN"),
 		MT5ImportMaxBytes: getenvInt64("MT5_IMPORT_MAX_BYTES", 10*1024*1024),
@@ -81,6 +83,18 @@ func getenvInt64(key string, fallback int64) int64 {
 		return fallback
 	}
 	out, err := strconv.ParseInt(v, 10, 64)
+	if err != nil {
+		return fallback
+	}
+	return out
+}
+
+func getenvBool(key string, fallback bool) bool {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	out, err := strconv.ParseBool(v)
 	if err != nil {
 		return fallback
 	}
