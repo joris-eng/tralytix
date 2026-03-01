@@ -4,28 +4,13 @@ import { useEffect } from "react";
 import { useAnalytics } from "@/features/analytics/hooks";
 import { ApiError } from "@/shared/ui/ApiError";
 import { JsonBlock } from "@/shared/ui/JsonBlock";
+import { downloadCsv } from "@/shared/csv/downloadCsv";
 
 function safeNumber(value: string | number | null | undefined): string {
   if (value === null || value === undefined) return "-";
   if (typeof value === "number" && Number.isFinite(value)) return value.toFixed(2);
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed.toFixed(2) : String(value);
-}
-
-function downloadCsv(filename: string, headers: string[], rows: string[][]) {
-  const escapeCell = (value: string) => `"${value.replace(/"/g, '""')}"`;
-  const csv = [headers, ...rows]
-    .map((line) => line.map(escapeCell).join(","))
-    .join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.setAttribute("download", filename);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 export function AnalyticsCard() {

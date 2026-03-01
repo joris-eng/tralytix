@@ -5,6 +5,7 @@ import { useTrades } from "@/features/trades/hooks";
 import { ApiError } from "@/shared/ui/ApiError";
 import { JsonBlock } from "@/shared/ui/JsonBlock";
 import type { TradeCreateInput, TradeModel } from "@/features/trades/model";
+import { downloadCsv } from "@/shared/csv/downloadCsv";
 
 const initialForm: TradeCreateInput = {
   instrument_id: "",
@@ -85,12 +86,37 @@ export function TradesCard() {
     return visibleTrades.slice(start, start + PAGE_SIZE);
   }, [currentPage, totalPages, visibleTrades]);
 
+  const exportFilteredTrades = () => {
+    if (visibleTrades.length === 0) {
+      return;
+    }
+    const rows = visibleTrades.map((trade) => [
+      trade.id ?? "",
+      trade.instrument_id ?? "",
+      trade.side ?? "",
+      formatRawNumber(trade.qty),
+      formatRawNumber(trade.entry_price),
+      formatRawNumber(trade.fees),
+      trade.opened_at ?? "",
+      trade.notes ?? ""
+    ]);
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(
+      `trades-${stamp}.csv`,
+      ["id", "instrument_id", "side", "qty", "entry_price", "fees", "opened_at", "notes"],
+      rows
+    );
+  };
+
   return (
     <section className="card">
       <h2>Trades</h2>
       <div className="row" style={{ marginBottom: 12 }}>
         <button className="primary" onClick={() => void refresh()} disabled={loading}>
           {loading ? "Loading..." : "Refresh trades"}
+        </button>
+        <button onClick={exportFilteredTrades} disabled={loading || visibleTrades.length === 0}>
+          Export filtered CSV
         </button>
       </div>
 
@@ -256,6 +282,13 @@ function formatNumber(value?: number): string {
     return "-";
   }
   return value.toFixed(4);
+}
+
+function formatRawNumber(value?: number): string {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "";
+  }
+  return String(value);
 }
 
 function getPersistedPrefs(): TradesUIPrefs {
