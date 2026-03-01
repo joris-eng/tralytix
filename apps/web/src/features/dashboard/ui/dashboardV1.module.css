@@ -1,0 +1,151 @@
+.page {
+  display: grid;
+  gap: var(--ui-space-5);
+}
+
+.header {
+  display: flex;
+  gap: var(--ui-space-4);
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.headerMeta {
+  display: inline-flex;
+  gap: var(--ui-space-2);
+  align-items: center;
+}
+
+.rangePicker {
+  min-width: 180px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: #0d1522;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  padding: 10px 12px;
+}
+
+.heroGrid {
+  display: grid;
+  gap: var(--ui-space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.insightsGrid {
+  display: grid;
+  gap: var(--ui-space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.breakdownGrid {
+  display: grid;
+  gap: var(--ui-space-3);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+}
+
+.metricValue {
+  margin-top: var(--ui-space-2);
+}
+
+.insightFooter {
+  margin-top: var(--ui-space-4);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sparkline {
+  margin-top: var(--ui-space-3);
+  height: 44px;
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-color-border);
+  background: #0d1522;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 8px;
+}
+
+.sparklineBar {
+  flex: 1;
+  border-radius: 2px;
+  background: #30415d;
+  min-height: 6px;
+}
+
+.tableWrap {
+  margin-top: var(--ui-space-3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--ui-color-divider);
+  font-size: var(--ui-font-size-sm);
+}
+
+.table th {
+  color: var(--ui-color-text-muted);
+  font-weight: 500;
+  background: #0e1623;
+}
+
+.topLeaksFooter {
+  margin-top: var(--ui-space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ui-space-3);
+  flex-wrap: wrap;
+}
+
+.proHiddenNotice {
+  border: 1px dashed var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-4);
+  margin-top: var(--ui-space-3);
+}
+
+.advancedFilters {
+  margin-top: var(--ui-space-3);
+  display: flex;
+  gap: var(--ui-space-2);
+  flex-wrap: wrap;
+}
+
+.filterToken {
+  border-radius: var(--ui-radius-pill);
+  border: 1px solid var(--ui-color-border);
+  color: var(--ui-color-text-muted);
+  padding: 6px 10px;
+  font-size: var(--ui-font-size-xs);
+  background: #0e1623;
+}
+
+@media (max-width: 1100px) {
+  .breakdownGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .heroGrid,
+  .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+}
