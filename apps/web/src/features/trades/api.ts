@@ -1,8 +1,18 @@
 import { apiClient } from "@/shared/api/apiClient";
-import { tradeCreateSchema, type TradeCreateInput } from "@/features/trades/model";
+import {
+  tradeCreateSchema,
+  tradesListSchema,
+  type TradeCreateInput,
+  type TradeModel
+} from "@/features/trades/model";
 
-export async function listTrades(): Promise<unknown> {
-  return apiClient.tradesList();
+export async function listTrades(): Promise<TradeModel[]> {
+  const payload = await apiClient.tradesList();
+  const parsed = tradesListSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(`Invalid trades response: ${parsed.error.message}`);
+  }
+  return parsed.data.trades;
 }
 
 export async function createTrade(input: TradeCreateInput): Promise<unknown> {

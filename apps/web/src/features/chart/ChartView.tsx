@@ -1,7 +1,16 @@
 "use client";
 import { useChartCandles } from "@/features/chart/hooks";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CandlesChart } from "@/features/chart/CandlesChart";
+
+const CHART_UI_PREFS_KEY = "chart_ui_prefs_v1";
+
+type ChartUIPrefs = {
+  symbol: string;
+  timeframe: string;
+  from: string;
+  to: string;
+};
 
 function toLocalInputValue(date: Date): string {
   const tzOffset = date.getTimezoneOffset() * 60000;
@@ -19,7 +28,46 @@ export function ChartView() {
   const [timeframe, setTimeframe] = useState("1h");
   const [from, setFrom] = useState(toLocalInputValue(initialFrom));
   const [to, setTo] = useState(toLocalInputValue(now));
-  const { candles, loading, error, loadCandles } = useChartCandles();
+  const { candles, loading, error, loadCandles, hydrateFromCache } = useChartCandles();
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      const raw = window.localStorage.getItem(CHART_UI_PREFS_KEY);
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw) as Partial<ChartUIPrefs>;
+      if (typeof parsed.symbol === "string" && parsed.symbol.trim()) {
+        setSymbol(parsed.symbol.trim().toUpperCase());
+      }
+      if (isValidTimeframe(parsed.timeframe)) {
+        setTimeframe(parsed.timeframe);
+      }
+      if (isValidLocalDateTimeInput(parsed.from)) {
+        setFrom(parsed.from);
+      }
+      if (isValidLocalDateTimeInput(parsed.to)) {
+        setTo(parsed.to);
+      }
+    } catch {
+      // Ignore invalid persisted data and keep defaults.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const payload: ChartUIPrefs = { symbol, timeframe, from, to };
+    window.localStorage.setItem(CHART_UI_PREFS_KEY, JSON.stringify(payload));
+  }, [symbol, timeframe, from, to]);
+
+  useEffect(() => {
+    hydrateFromCache({ symbol, timeframe, from, to });
+  }, [symbol, timeframe, from, to, hydrateFromCache]);
 
   return (
     <section className="card">
@@ -58,4 +106,15 @@ export function ChartView() {
       )}
     </section>
   );
+}
+
+function isValidTimeframe(value: unknown): value is string {
+  return value === "15m" || value === "1h" || value === "4h" || value === "1d";
+}
+
+function isValidLocalDateTimeInput(value: unknown): value is string {
+  if (typeof value !== "string" || !value.trim()) {
+    return false;
+  }
+  return !Number.isNaN(new Date(value).getTime());
 }

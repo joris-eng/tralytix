@@ -14,6 +14,7 @@ import { clearToken, getToken } from "@/lib/auth";
 export default function HomePage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +30,7 @@ export default function HomePage() {
         await fetchAuthMe(token);
         if (!cancelled) {
           setIsAuthenticated(true);
+          setCheckingSession(false);
         }
       } catch {
         clearToken();
@@ -41,6 +43,16 @@ export default function HomePage() {
       cancelled = true;
     };
   }, [router]);
+
+  if (checkingSession) {
+    return (
+      <section className="card">
+        <h1>Tralytix Dashboard</h1>
+        <p className="muted">Checking session...</p>
+        <div className="skeleton-line" />
+      </section>
+    );
+  }
 
   if (!isAuthenticated) {
     return <p className="muted">Redirecting to login...</p>;

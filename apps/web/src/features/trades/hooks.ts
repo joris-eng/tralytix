@@ -3,10 +3,10 @@
 import { useCallback, useState } from "react";
 import { ApiHttpError } from "@/shared/api/http";
 import { createTrade, listTrades } from "@/features/trades/api";
-import type { TradeCreateInput } from "@/features/trades/model";
+import type { TradeCreateInput, TradeModel } from "@/features/trades/model";
 
 export function useTrades() {
-  const [items, setItems] = useState<unknown>(null);
+  const [items, setItems] = useState<TradeModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
