@@ -1,45 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChartView } from "@/features/chart/ChartView";
-import { fetchAuthMe } from "@/lib/authApi";
-import { clearToken, getToken } from "@/lib/auth";
+import { AuthGate } from "@/shared/auth/AuthGate";
+import { useRequireAuth } from "@/shared/auth/useSessionState";
 
 export default function ChartPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, checkingSession } = useRequireAuth(router);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function checkSession() {
-      const token = getToken();
-      if (!token) {
-        router.replace("/login");
-        return;
-      }
-
-      try {
-        await fetchAuthMe(token);
-        if (!cancelled) {
-          setIsAuthenticated(true);
-        }
-      } catch {
-        clearToken();
-        router.replace("/login");
-      }
-    }
-
-    void checkSession();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
-  if (!isAuthenticated) {
-    return <p className="muted">Redirecting to login...</p>;
-  }
-
-  return <ChartView />;
+  return (
+    <AuthGate checkingSession={checkingSession} isAuthenticated={isAuthenticated}>
+      <ChartView />
+    </AuthGate>
+  );
 }

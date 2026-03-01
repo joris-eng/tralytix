@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMt5Status } from "@/features/mt5/hooks";
 import { ApiError } from "@/shared/ui/ApiError";
 import { JsonBlock } from "@/shared/ui/JsonBlock";
-import { fetchAuthMe } from "@/lib/authApi";
-import { clearToken, getToken } from "@/lib/auth";
+import { AuthGate } from "@/shared/auth/AuthGate";
+import { useRequireAuth } from "@/shared/auth/useSessionState";
 
 function Mt5StatusContent() {
   const { data, error, loading, refresh } = useMt5Status();
@@ -32,39 +31,12 @@ function Mt5StatusContent() {
 
 export default function Mt5StatusPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { isAuthenticated, checkingSession } = useRequireAuth(router);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function checkSession() {
-      const token = getToken();
-      if (!token) {
-        router.replace("/login");
-        return;
-      }
-
-      try {
-        await fetchAuthMe(token);
-        if (!cancelled) {
-          setIsAuthenticated(true);
-        }
-      } catch {
-        clearToken();
-        router.replace("/login");
-      }
-    }
-
-    void checkSession();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
-
-  if (!isAuthenticated) {
-    return <p className="muted">Redirecting to login...</p>;
-  }
-
-  return <Mt5StatusContent />;
+  return (
+    <AuthGate checkingSession={checkingSession} isAuthenticated={isAuthenticated}>
+      <Mt5StatusContent />
+    </AuthGate>
+  );
 }
 

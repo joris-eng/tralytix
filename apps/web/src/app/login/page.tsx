@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ApiError, apiFetch } from "@/lib/api";
-import { clearToken, getToken, setToken } from "@/lib/auth";
-import { fetchAuthMe } from "@/lib/authApi";
+import { setToken } from "@/lib/auth";
+import { useAuthConfig, useRedirectIfAuthenticated } from "@/shared/auth/useSessionState";
 
 type DevLoginResponse = {
   token: string;
@@ -23,44 +23,14 @@ function formatUnknown(value: unknown): string {
 export default function LoginPage() {
   const router = useRouter();
   const isProduction = process.env.NODE_ENV === "production";
-  const [checkingSession, setCheckingSession] = useState<boolean>(true);
+  const { checkingSession } = useRedirectIfAuthenticated(router);
+  const { devLoginEnabled, loading: loadingAuthConfig } = useAuthConfig();
   const [email, setEmail] = useState<string>(
     process.env.NODE_ENV === "development" ? "dev@tralytix.com" : ""
   );
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [errorPayload, setErrorPayload] = useState<string>("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function ensureAnonymousLogin() {
-      const token = getToken();
-      if (!token) {
-        if (!cancelled) {
-          setCheckingSession(false);
-        }
-        return;
-      }
-
-      try {
-        await fetchAuthMe(token);
-        if (!cancelled) {
-          router.replace("/");
-        }
-      } catch {
-        clearToken();
-        if (!cancelled) {
-          setCheckingSession(false);
-        }
-      }
-    }
-
-    void ensureAnonymousLogin();
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,6 +68,9 @@ export default function LoginPage() {
       <h1>Login (dev)</h1>
       <p className="muted">Dev login can be disabled by backend configuration in production.</p>
       {checkingSession ? <p className="muted">Checking active session...</p> : null}
+      {!loadingAuthConfig && !devLoginEnabled ? (
+        <p className="error">Dev login is disabled on this environment.</p>
+      ) : null}
       <form onSubmit={(event) => void onSubmit(event)}>
         <label htmlFor="email">Email</label>
         <input
@@ -107,7 +80,7 @@ export default function LoginPage() {
           onChange={(event) => setEmail(event.target.value)}
           placeholder="dev@tralytix.com"
         />
-        <button type="submit" disabled={checkingSession || loading || !email.trim()}>
+        <button type="submit" disabled={checkingSession || loadingAuthConfig || loading || !devLoginEnabled || !email.trim()}>
           {loading ? "Loading..." : "Login (dev)"}
         </button>
       </form>
