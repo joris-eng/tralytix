@@ -5,7 +5,9 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/application"
@@ -29,6 +31,7 @@ type Handler struct {
 type service interface {
 	ImportCSV(ctx context.Context, accountID string, rawCSV []byte) (application.ImportResult, error)
 	Status(ctx context.Context, accountID string) (domain.AccountSnapshot, error)
+	ListTrades(ctx context.Context, accountID string, limit, offset int) (application.TradesResponse, error)
 }
 
 func NewHandler(
@@ -53,6 +56,7 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		}
 		sr.Post("/integrations/mt5/import", h.importCSV)
 		sr.Get("/integrations/mt5/status", h.status)
+		sr.Get("/integrations/mt5/trades", h.listTrades)
 	})
 }
 
@@ -123,4 +127,89 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.JSON(w, http.StatusOK, snapshot)
+}
+
+type tradeDTO struct {
+	Ticket     string     `json:"ticket"`
+	Symbol     string     `json:"symbol"`
+	Side       string     `json:"side"`
+	Volume     float64    `json:"volume"`
+	OpenPrice  float64    `json:"open_price"`
+	ClosePrice *float64   `json:"close_price,omitempty"`
+	Profit     float64    `json:"profit"`
+	OpenedAt   string     `json:"opened_at"`
+	ClosedAt   *string    `json:"closed_at,omitempty"`
+	Commission float64    `json:"commission"`
+	Swap       float64    `json:"swap"`
+}
+
+type listTradesResponseDTO struct {
+	Trades []tradeDTO `json:"trades"`
+	Total  int        `json:"total"`
+}
+
+func (h *Handler) listTrades(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authctx.AuthUserID(r.Context())
+	if !ok || userID == "" {
+		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	limit := 50
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			platformerrors.WriteHTTP(w, http.StatusBadRequest, "invalid limit")
+			return
+		}
+		limit = parsed
+	}
+
+	offset := 0
+	if raw := strings.TrimSpace(r.URL.Query().Get("offset")); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			platformerrors.WriteHTTP(w, http.StatusBadRequest, "invalid offset")
+			return
+		}
+		offset = parsed
+	}
+
+	response, err := h.svc.ListTrades(r.Context(), userID, limit, offset)
+	if err != nil {
+		switch {
+		case errors.Is(err, application.ErrInvalidAccount):
+			platformerrors.WriteHTTP(w, http.StatusBadRequest, err.Error())
+		default:
+			platformerrors.WriteHTTP(w, http.StatusInternalServerError, "internal server error")
+		}
+		return
+	}
+
+	trades := make([]tradeDTO, 0, len(response.Trades))
+	for _, t := range response.Trades {
+		var closedAt *string
+		if t.ClosedAt != nil {
+			v := t.ClosedAt.UTC().Format(time.RFC3339)
+			closedAt = &v
+		}
+		trades = append(trades, tradeDTO{
+			Ticket:     t.Ticket,
+			Symbol:     t.Symbol,
+			Side:       t.Side,
+			Volume:     t.Volume,
+			OpenPrice:  t.OpenPrice,
+			ClosePrice: t.ClosePrice,
+			Profit:     t.Profit,
+			OpenedAt:   t.OpenedAt.UTC().Format(time.RFC3339),
+			ClosedAt:   closedAt,
+			Commission: t.Commission,
+			Swap:       t.Swap,
+		})
+	}
+
+	httpx.JSON(w, http.StatusOK, listTradesResponseDTO{
+		Trades: trades,
+		Total:  response.Total,
+	})
 }

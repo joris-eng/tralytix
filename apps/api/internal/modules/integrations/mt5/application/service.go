@@ -31,6 +31,11 @@ type ImportResult struct {
 	LastError            *string    `json:"last_error,omitempty"`
 }
 
+type TradesResponse struct {
+	Trades []domain.Trade `json:"trades"`
+	Total  int            `json:"total"`
+}
+
 type Service struct {
 	repo    ports.TradeRepository
 	importer ports.Importer
@@ -124,6 +129,31 @@ func (s *Service) Status(ctx context.Context, accountID string) (domain.AccountS
 		}
 	}
 	return snapshot, nil
+}
+
+func (s *Service) ListTrades(ctx context.Context, accountID string, limit, offset int) (TradesResponse, error) {
+	accountID = strings.TrimSpace(accountID)
+	if accountID == "" {
+		return TradesResponse{}, ErrInvalidAccount
+	}
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 200 {
+		limit = 200
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	trades, err := s.repo.ListTrades(ctx, accountID, limit, offset)
+	if err != nil {
+		return TradesResponse{}, fmt.Errorf("list trades: %w", err)
+	}
+	return TradesResponse{
+		Trades: trades,
+		Total:  len(trades),
+	}, nil
 }
 
 func normalizeTrade(t domain.Trade, accountID string, importedAt time.Time) domain.Trade {

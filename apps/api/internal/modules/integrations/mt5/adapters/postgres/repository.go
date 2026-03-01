@@ -110,3 +110,61 @@ WHERE account_id = $1`
 	}
 	return snap, nil
 }
+
+func (r *Repository) ListTrades(ctx context.Context, accountID string, limit, offset int) ([]domain.Trade, error) {
+	uid, err := uuid.Parse(accountID)
+	if err != nil {
+		return nil, fmt.Errorf("parse account id: %w", err)
+	}
+
+	const q = `
+SELECT
+	id, account_id, ticket, symbol, side, volume,
+	open_price, close_price, opened_at, closed_at,
+	commission, swap, profit, comment, source_hash, imported_at
+FROM mt5_trades
+WHERE account_id = $1
+ORDER BY opened_at DESC
+LIMIT $2 OFFSET $3`
+
+	rows, err := r.pool.Query(ctx, q, uid, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("query trades: %w", err)
+	}
+	defer rows.Close()
+
+	trades := make([]domain.Trade, 0, limit)
+	for rows.Next() {
+		var trade domain.Trade
+		var tradeID uuid.UUID
+		var tradeAccountID uuid.UUID
+		if err := rows.Scan(
+			&tradeID,
+			&tradeAccountID,
+			&trade.Ticket,
+			&trade.Symbol,
+			&trade.Side,
+			&trade.Volume,
+			&trade.OpenPrice,
+			&trade.ClosePrice,
+			&trade.OpenedAt,
+			&trade.ClosedAt,
+			&trade.Commission,
+			&trade.Swap,
+			&trade.Profit,
+			&trade.Comment,
+			&trade.SourceHash,
+			&trade.ImportedAt,
+		); err != nil {
+			return nil, fmt.Errorf("query trades: %w", err)
+		}
+		trade.ID = tradeID.String()
+		trade.AccountID = tradeAccountID.String()
+		trades = append(trades, trade)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("query trades: %w", err)
+	}
+
+	return trades, nil
+}

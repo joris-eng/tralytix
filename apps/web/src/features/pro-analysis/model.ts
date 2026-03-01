@@ -1,48 +1,33 @@
+import { z } from "zod";
+
 export type TradeDirection = "LONG" | "SHORT";
-export type TradingSession = "ASIA" | "LONDON" | "NEW_YORK";
 export type CapitalBucket = "small" | "mid" | "large";
 export type TradingStyle = "scalping" | "intraday" | "swing";
 
-export type ProAnalysisTrade = {
-  id: string;
-  instrument: string;
-  direction: TradeDirection;
-  tag: string;
-  session: TradingSession;
-  openedAt: string;
-  closedAt: string;
-  pnl: number;
-  rr: number;
-  durationMin: number;
-  entry: number;
-  stop: number;
-  target: number;
-  close: number;
-  notes: string;
-};
-
-export type ProPatternAlert = {
-  id: string;
-  level: "warning" | "success" | "neutral";
-  title: string;
-  detail: string;
-  recommendation: string;
-};
-
 export type ProAnalysisFilters = {
   dateRange: string;
-  instrument: string;
-  direction: "ALL" | TradeDirection;
-  tag: string;
-  session: "ALL" | TradingSession;
+  symbol: string;
+  side: "ALL" | TradeDirection;
 };
 
-export type ProAnalysisViewModel = {
-  title: string;
-  subtitle: string;
-  filters: ProAnalysisFilters;
-  capitalBucket: CapitalBucket;
-  tradingStyle: TradingStyle;
-  trades: ProAnalysisTrade[];
-  alerts: ProPatternAlert[];
-};
+export const proAnalysisTradeSchema = z.object({
+  ticket: z.string(),
+  symbol: z.string(),
+  side: z.enum(["LONG", "SHORT"]),
+  volume: z.number(),
+  open_price: z.number(),
+  close_price: z.number().nullable().optional(),
+  profit: z.number(),
+  opened_at: z.string(),
+  closed_at: z.string().nullable().optional(),
+  commission: z.number(),
+  swap: z.number()
+});
+
+export const proAnalysisTradesResponseSchema = z.object({
+  trades: z.array(proAnalysisTradeSchema).default([]),
+  total: z.number()
+});
+
+export type ProAnalysisTrade = z.infer<typeof proAnalysisTradeSchema>;
+export type ProAnalysisTradesResponse = z.infer<typeof proAnalysisTradesResponseSchema>;
