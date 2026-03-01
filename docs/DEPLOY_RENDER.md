@@ -47,7 +47,7 @@ Recommended value:
   - Staging: `https://tralytix-staging-api.onrender.com`
   - Production: `https://tralytix-prod-api.onrender.com`
 
-Do not expose backend base URL with `NEXT_PUBLIC_*` in proxy-first mode.
+Do not set `NEXT_PUBLIC_API_BASE_URL` on the web service. The app only uses server-side `API_BASE_URL`.
 
 ## Verify deployment
 

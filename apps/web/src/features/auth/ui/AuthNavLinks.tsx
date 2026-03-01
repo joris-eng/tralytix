@@ -1,11 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { clearToken, getToken } from "@/lib/auth";
+import { getToken } from "@/lib/auth";
 
-export function LogoutButton() {
-  const router = useRouter();
+export function AuthNavLinks() {
   const [hasToken, setHasToken] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -24,25 +23,26 @@ export function LogoutButton() {
     };
   }, []);
 
-  const onLogout = () => {
-    clearToken();
-    setHasToken(false);
-    setChecking(false);
-    router.replace("/login");
-  };
-
   if (checking) {
-    return null;
+    return <span className="session-badge loading">Checking...</span>;
   }
 
   if (!hasToken) {
-    return null;
+    return (
+      <>
+        <span className="session-badge">Guest</span>
+        <Link href="/login">Login</Link>
+      </>
+    );
   }
 
   return (
-    <button onClick={onLogout} type="button">
-      Logout
-    </button>
+    <>
+      <span className="session-badge">Connected</span>
+      <Link href="/">Dashboard</Link>
+      <Link href="/mt5-status">MT5 Status</Link>
+      <Link href="/chart">Chart</Link>
+      <Link href="/stats">Stats</Link>
+    </>
   );
 }
-

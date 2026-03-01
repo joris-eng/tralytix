@@ -35,7 +35,7 @@ Set this in Render **for the web service**:
 
 Notes:
 - `API_BASE_URL` is read server-side by the proxy route: `src/app/api/backend/[...path]/route.ts`.
-- Do not rely on `NEXT_PUBLIC_API_BASE_URL` for backend routing.
+- `NEXT_PUBLIC_API_BASE_URL` is not used by the app. Remove it from Render web env to avoid confusion.
 
 ## 4) Post-deploy verification
 
@@ -86,6 +86,7 @@ Fix:
 
 Checklist:
 - Web service has `API_BASE_URL` set
+- Web service does not define `NEXT_PUBLIC_API_BASE_URL`
 - Backend service is live and healthy
 - Deployment includes latest commit
 

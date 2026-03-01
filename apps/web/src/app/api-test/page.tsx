@@ -12,6 +12,13 @@ type HealthResponse = {
   db?: string;
 };
 
+type VersionResponse = {
+  name?: string;
+  version?: string;
+  commit?: string;
+  builtAt?: string;
+};
+
 function formatUnknown(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -21,9 +28,12 @@ function formatUnknown(value: unknown): string {
 }
 
 export default function ApiTestPage() {
+  const isProduction = process.env.NODE_ENV === "production";
   const [tokenInputKey, setTokenInputKey] = useState<number>(0);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [healthError, setHealthError] = useState<string>("");
+  const [version, setVersion] = useState<VersionResponse | null>(null);
+  const [versionError, setVersionError] = useState<string>("");
   const [token, setToken] = useState<string>("");
   const [tradesJSON, setTradesJSON] = useState<string>("");
   const [tradesError, setTradesError] = useState<string>("");
@@ -36,9 +46,13 @@ export default function ApiTestPage() {
     let cancelled = false;
     async function loadHealth() {
       try {
-        const data = await apiFetch<HealthResponse>("/health");
+        const [healthData, versionData] = await Promise.all([
+          apiFetch<HealthResponse>("/health"),
+          apiFetch<VersionResponse>("/version"),
+        ]);
         if (!cancelled) {
-          setHealth(data);
+          setHealth(healthData);
+          setVersion(versionData);
         }
       } catch (error: unknown) {
         if (cancelled) {
@@ -46,9 +60,11 @@ export default function ApiTestPage() {
         }
         if (error instanceof ApiError) {
           setHealthError(error.message);
+          setVersionError(error.message);
           return;
         }
         setHealthError("Unable to load health endpoint");
+        setVersionError("Unable to load version endpoint");
       }
     }
     void loadHealth();
@@ -58,6 +74,9 @@ export default function ApiTestPage() {
   }, []);
 
   async function onLoadTrades() {
+    if (isProduction) {
+      return;
+    }
     setLoadingTrades(true);
     setTradesError("");
     setTradesJSON("");
@@ -79,6 +98,9 @@ export default function ApiTestPage() {
   }
 
   async function onLoadMe() {
+    if (isProduction) {
+      return;
+    }
     setLoadingMe(true);
     setMeError("");
     setMeJSON("");
@@ -108,6 +130,9 @@ export default function ApiTestPage() {
   }
 
   function onSaveToken() {
+    if (isProduction) {
+      return;
+    }
     if (!token.trim()) {
       return;
     }
@@ -115,6 +140,9 @@ export default function ApiTestPage() {
   }
 
   function onClearToken() {
+    if (isProduction) {
+      return;
+    }
     clearToken();
     setToken("");
     setTokenInputKey((prev) => prev + 1);
@@ -123,6 +151,11 @@ export default function ApiTestPage() {
   return (
     <main>
       <h1>API Test</h1>
+      {isProduction ? (
+        <p className="muted">
+          Production mode: diagnostic page is read-only (health/version only).
+        </p>
+      ) : null}
 
       <section>
         <h2>Health</h2>
@@ -133,29 +166,39 @@ export default function ApiTestPage() {
             status: {health?.status ?? "-"} / db: {health?.db ?? "-"}
           </p>
         )}
+        {versionError ? (
+          <p>{versionError}</p>
+        ) : (
+          <p>
+            version: {version?.version ?? "-"} / commit: {version?.commit ?? "-"} / builtAt:{" "}
+            {version?.builtAt ?? "-"}
+          </p>
+        )}
       </section>
 
-      <section>
-        <h2>Trades</h2>
-        <TokenInput key={tokenInputKey} id="api-test-token" onTokenChange={setToken} />
-        {token.trim() ? <p>Token ok</p> : <p>No token</p>}
-        <button type="button" onClick={onSaveToken} disabled={!token.trim()}>
-          Save token
-        </button>
-        <button type="button" onClick={onClearToken}>
-          Clear token
-        </button>
-        <button type="button" onClick={() => void onLoadTrades()} disabled={loadingTrades}>
-          {loadingTrades ? "Loading..." : "Load trades"}
-        </button>
-        <button type="button" onClick={() => void onLoadMe()} disabled={loadingMe}>
-          {loadingMe ? "Loading..." : "Load me"}
-        </button>
-        {tradesError ? <p>{tradesError}</p> : null}
-        {tradesJSON ? <pre>{tradesJSON}</pre> : null}
-        {meError ? <p>{meError}</p> : null}
-        {meJSON ? <pre>{meJSON}</pre> : null}
-      </section>
+      {!isProduction ? (
+        <section>
+          <h2>Trades</h2>
+          <TokenInput key={tokenInputKey} id="api-test-token" onTokenChange={setToken} />
+          {token.trim() ? <p>Token ok</p> : <p>No token</p>}
+          <button type="button" onClick={onSaveToken} disabled={!token.trim()}>
+            Save token
+          </button>
+          <button type="button" onClick={onClearToken}>
+            Clear token
+          </button>
+          <button type="button" onClick={() => void onLoadTrades()} disabled={loadingTrades}>
+            {loadingTrades ? "Loading..." : "Load trades"}
+          </button>
+          <button type="button" onClick={() => void onLoadMe()} disabled={loadingMe}>
+            {loadingMe ? "Loading..." : "Load me"}
+          </button>
+          {tradesError ? <p>{tradesError}</p> : null}
+          {tradesJSON ? <pre>{tradesJSON}</pre> : null}
+          {meError ? <p>{meError}</p> : null}
+          {meJSON ? <pre>{meJSON}</pre> : null}
+        </section>
+      ) : null}
     </main>
   );
 }

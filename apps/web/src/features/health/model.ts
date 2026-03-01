@@ -7,7 +7,9 @@ export const healthSchema = z.object({
 
 export const versionSchema = z.object({
   name: z.string(),
-  version: z.string()
+  version: z.string(),
+  commit: z.string().optional(),
+  builtAt: z.string().optional()
 });
 
 export type HealthModel = z.infer<typeof healthSchema>;
