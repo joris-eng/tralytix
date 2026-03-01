@@ -1,27 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { getToken } from "@/lib/auth";
+import { useTokenPresence } from "@/shared/auth/useSessionState";
 
 export function AuthNavLinks() {
-  const [hasToken, setHasToken] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const sync = () => {
-      setHasToken(Boolean(getToken()));
-      setChecking(false);
-    };
-    sync();
-
-    window.addEventListener("storage", sync);
-    window.addEventListener("focus", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("focus", sync);
-    };
-  }, []);
+  const { hasToken, checking } = useTokenPresence();
 
   if (checking) {
     return <span className="session-badge loading">Checking...</span>;

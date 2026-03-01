@@ -1,33 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearToken, getToken } from "@/lib/auth";
+import { clearToken } from "@/lib/auth";
+import { useTokenPresence } from "@/shared/auth/useSessionState";
 
 export function LogoutButton() {
   const router = useRouter();
-  const [hasToken, setHasToken] = useState(false);
-  const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    const sync = () => {
-      setHasToken(Boolean(getToken()));
-      setChecking(false);
-    };
-    sync();
-
-    window.addEventListener("storage", sync);
-    window.addEventListener("focus", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("focus", sync);
-    };
-  }, []);
+  const { hasToken, checking } = useTokenPresence();
 
   const onLogout = () => {
     clearToken();
-    setHasToken(false);
-    setChecking(false);
     router.replace("/login");
   };
 

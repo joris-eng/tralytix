@@ -28,6 +28,7 @@ func NewHandler(loginDevUC *identityusecase.LoginDevUseCase, authMW authMiddlewa
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
+	r.Get("/auth/config", h.authConfig)
 	r.Post("/auth/dev-login", h.devLogin)
 	r.Group(func(sr chi.Router) {
 		sr.Use(h.authMW.RequireAuth)
@@ -45,6 +46,16 @@ type devLoginResponse struct {
 
 type meResponse struct {
 	UserID string `json:"user_id"`
+}
+
+type authConfigResponse struct {
+	DevLoginEnabled bool `json:"dev_login_enabled"`
+}
+
+func (h *Handler) authConfig(w http.ResponseWriter, _ *http.Request) {
+	httpx.JSON(w, http.StatusOK, authConfigResponse{
+		DevLoginEnabled: h.enableDevLogin,
+	})
 }
 
 func (h *Handler) devLogin(w http.ResponseWriter, r *http.Request) {

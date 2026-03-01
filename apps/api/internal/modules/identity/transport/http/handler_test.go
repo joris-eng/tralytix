@@ -77,3 +77,47 @@ func TestHandler_DevLogin_Disabled_ReturnsForbidden(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rr.Code)
 	}
 }
+
+func TestHandler_AuthConfig_ReturnsDevLoginFlag(t *testing.T) {
+	t.Run("enabled", func(t *testing.T) {
+		h := NewHandler(nil, allowAuthMW{}, true)
+		r := chi.NewRouter()
+		h.RegisterRoutes(r)
+
+		req := httptest.NewRequest(http.MethodGet, "/auth/config", nil)
+		rr := httptest.NewRecorder()
+
+		r.ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+		}
+		var body map[string]bool
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("decode response: %v", err)
+		}
+		if !body["dev_login_enabled"] {
+			t.Fatalf("expected dev_login_enabled=true")
+		}
+	})
+
+	t.Run("disabled", func(t *testing.T) {
+		h := NewHandler(nil, allowAuthMW{}, false)
+		r := chi.NewRouter()
+		h.RegisterRoutes(r)
+
+		req := httptest.NewRequest(http.MethodGet, "/auth/config", nil)
+		rr := httptest.NewRecorder()
+
+		r.ServeHTTP(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+		}
+		var body map[string]bool
+		if err := json.Unmarshal(rr.Body.Bytes(), &body); err != nil {
+			t.Fatalf("decode response: %v", err)
+		}
+		if body["dev_login_enabled"] {
+			t.Fatalf("expected dev_login_enabled=false")
+		}
+	})
+}
