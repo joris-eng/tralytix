@@ -1,12 +1,6 @@
-:root {
-  --bg: #0f172a;
-  --bg-soft: #1e293b;
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --primary: #22c55e;
-  --danger: #ef4444;
-  --border: #334155;
-}
+@import "../styles/tokens.css";
+@import "../styles/ui-foundations.css";
+@import "../styles/ui-components.css";
 
 * {
   box-sizing: border-box;
