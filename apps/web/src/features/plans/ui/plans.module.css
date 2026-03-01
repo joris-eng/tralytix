@@ -1,0 +1,53 @@
+.page {
+  display: grid;
+  gap: var(--ui-space-5);
+}
+
+.header {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.comparisonGrid {
+  display: grid;
+  gap: var(--ui-space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pricingCard {
+  display: grid;
+  gap: var(--ui-space-3);
+  position: relative;
+}
+
+.popularBadge {
+  position: absolute;
+  top: var(--ui-space-4);
+  right: var(--ui-space-4);
+}
+
+.priceRow {
+  display: flex;
+  gap: var(--ui-space-2);
+  align-items: baseline;
+}
+
+.ctaRow {
+  margin-top: var(--ui-space-2);
+}
+
+.faqList {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.faqItem {
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+@media (max-width: 980px) {
+  .comparisonGrid {
+    grid-template-columns: 1fr;
+  }
+}
