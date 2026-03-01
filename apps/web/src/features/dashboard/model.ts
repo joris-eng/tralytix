@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export type DashboardMode = "simple" | "pro";
 
 export type HeroCardTone = "primary" | "warning" | "success";
@@ -47,3 +49,31 @@ export type DashboardViewModel = {
   breakdown: BreakdownModel[];
   topLeaks: TopLeakModel[];
 };
+
+export const dashboardSummarySchema = z.object({
+  trades_count: z.number(),
+  winrate: z.number(),
+  avg_pnl: z.number(),
+  profit_factor: z.number()
+});
+
+export const dashboardInsightItemSchema = z.object({
+  title: z.string(),
+  detail: z.string(),
+  severity: z.string()
+});
+
+export const dashboardRecommendedActionSchema = z.object({
+  title: z.string(),
+  detail: z.string()
+});
+
+export const dashboardInsightsSchema = z.object({
+  score: z.number(),
+  label: z.string(),
+  top_insights: z.array(dashboardInsightItemSchema).default([]),
+  recommended_action: dashboardRecommendedActionSchema
+});
+
+export type DashboardSummary = z.infer<typeof dashboardSummarySchema>;
+export type DashboardInsights = z.infer<typeof dashboardInsightsSchema>;
