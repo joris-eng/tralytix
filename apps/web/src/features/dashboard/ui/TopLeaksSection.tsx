@@ -1,5 +1,6 @@
 import type { DashboardMode, TopLeakModel } from "@/features/dashboard/model";
-import { Badge, Button, Heading, Skeleton, Text } from "@/features/ui/primitives";
+import Link from "next/link";
+import { Badge, Heading, Skeleton, Text } from "@/features/ui/primitives";
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
 
 type TopLeaksSectionProps = {
@@ -62,7 +63,9 @@ export function TopLeaksSection({ mode, rows }: TopLeaksSectionProps) {
         <Text size="sm" tone="subtle">
           Open the advanced workspace for deeper analysis and remediation workflows.
         </Text>
-        <Button variant="primary">Open Pro Analysis</Button>
+        <Link href="/pro-analysis" className="ui-button" data-variant="primary">
+          Open Pro Analysis
+        </Link>
       </div>
     </section>
   );
