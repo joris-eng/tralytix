@@ -9,9 +9,22 @@ import {
   getMt5AnalyticsSummary,
   recomputeMt5AnalyticsDaily
 } from "@/features/analytics/api";
+import type {
+  AnalyticsSummaryModel,
+  Mt5AnalyticsSummaryModel,
+  Mt5EquityModel,
+  Mt5InsightsModel
+} from "@/features/analytics/model";
+
+type AnalyticsData = {
+  summary: AnalyticsSummaryModel;
+  mt5Summary: Mt5AnalyticsSummaryModel;
+  insights: Mt5InsightsModel;
+  equity: Mt5EquityModel;
+};
 
 export function useAnalytics() {
-  const [data, setData] = useState<Record<string, unknown> | null>(null);
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [recomputeResult, setRecomputeResult] = useState<unknown>(null);

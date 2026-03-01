@@ -22,6 +22,10 @@ func (f *fakeRepo) GetAccountSnapshot(_ context.Context, accountID string) (doma
 	return domain.AccountSnapshot{AccountID: accountID, TotalTrades: int64(f.inserted)}, nil
 }
 
+func (f *fakeRepo) ListTrades(_ context.Context, _ string, _, _ int) ([]domain.Trade, error) {
+	return nil, nil
+}
+
 type fakeImporter struct {
 	trades []domain.Trade
 }

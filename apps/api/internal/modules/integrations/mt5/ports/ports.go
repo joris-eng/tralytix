@@ -10,6 +10,7 @@ import (
 type TradeRepository interface {
 	SaveImportedTrades(ctx context.Context, trades []domain.Trade) (int, error)
 	GetAccountSnapshot(ctx context.Context, accountID string) (domain.AccountSnapshot, error)
+	ListTrades(ctx context.Context, accountID string, limit, offset int) ([]domain.Trade, error)
 }
 
 type Importer interface {

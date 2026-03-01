@@ -20,6 +20,13 @@ export const apiClient = {
       body: { email }
     }),
   mt5Status: () => httpRequest<unknown>(privateClient, "GET", "/integrations/mt5/status"),
+  mt5Trades: (limit?: number, offset?: number) =>
+    httpRequest<unknown>(privateClient, "GET", "/integrations/mt5/trades", {
+      query: {
+        ...(limit !== undefined ? { limit: String(limit) } : {}),
+        ...(offset !== undefined ? { offset: String(offset) } : {})
+      }
+    }),
   mt5Import: (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
