@@ -47,12 +47,16 @@ func TestRequirePlan_FreeUser_Returns403(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rr.Code)
 	}
 
-	var payload map[string]string
+	var payload map[string]any
 	if err := json.Unmarshal(rr.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if payload["error"] != "pro_required" {
-		t.Fatalf("expected error=pro_required, got %q", payload["error"])
+	errBody, ok := payload["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected nested error object in response")
+	}
+	if errBody["code"] != "pro_required" {
+		t.Fatalf("expected code=pro_required, got %v", errBody["code"])
 	}
 }
 

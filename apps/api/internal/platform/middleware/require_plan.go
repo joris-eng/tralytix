@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/billing/domain"
@@ -27,7 +25,7 @@ func RequirePlan(repo billingports.SubscriptionRepository, plan domain.Plan) fun
 			}
 
 			if planLevel(userPlan) < planLevel(plan) {
-				writeProRequired(w, r.Context())
+				writeProRequired(w)
 				return
 			}
 
@@ -43,11 +41,6 @@ func planLevel(p domain.Plan) int {
 	return 0
 }
 
-func writeProRequired(w http.ResponseWriter, _ context.Context) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusForbidden)
-	_ = json.NewEncoder(w).Encode(map[string]string{
-		"error":   "pro_required",
-		"message": "Upgrade to Pro to access this feature",
-	})
+func writeProRequired(w http.ResponseWriter) {
+	platformerrors.WriteError(w, nil, http.StatusForbidden, "pro_required", "Upgrade to Pro to access this feature", nil)
 }
