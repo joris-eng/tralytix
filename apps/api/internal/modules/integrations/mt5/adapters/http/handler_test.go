@@ -53,7 +53,7 @@ func TestImportCSV_InvalidCSV_ReturnsBadRequest(t *testing.T) {
 		t.Fatalf("close writer: %v", err)
 	}
 
-	h := NewHandler(fakeService{importErr: application.ErrInvalidCSV}, nil, 10*1024*1024, nil)
+	h := NewHandler(fakeService{importErr: application.ErrInvalidCSV}, nil, 10*1024*1024, nil, nil)
 	req := httptest.NewRequest(http.MethodPost, "/v1/integrations/mt5/import", &body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
@@ -132,7 +132,7 @@ func TestListTrades_OK(t *testing.T) {
 		},
 	}
 
-	h := NewHandler(service, nil, 10*1024*1024, nil)
+	h := NewHandler(service, nil, 10*1024*1024, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/integrations/mt5/trades?limit=2&offset=0", nil)
 	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
 	rr := httptest.NewRecorder()
@@ -179,7 +179,7 @@ func TestListTrades_OK(t *testing.T) {
 }
 
 func TestListTrades_Unauthenticated(t *testing.T) {
-	h := NewHandler(fakeService{}, nil, 10*1024*1024, nil)
+	h := NewHandler(fakeService{}, nil, 10*1024*1024, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/integrations/mt5/trades?limit=2&offset=0", nil)
 	rr := httptest.NewRecorder()
 
@@ -198,7 +198,7 @@ func TestListTrades_DefaultPagination(t *testing.T) {
 			Trades: []domain.Trade{},
 			Total:  0,
 		},
-	}, nil, 10*1024*1024, nil)
+	}, nil, 10*1024*1024, nil, nil)
 	req := httptest.NewRequest(http.MethodGet, "/v1/integrations/mt5/trades", nil)
 	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
 	rr := httptest.NewRecorder()

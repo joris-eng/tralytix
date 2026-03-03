@@ -9,8 +9,13 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 			sr.Use(h.rateLimitMW)
 		}
 		sr.Get("/integrations/mt5/analytics/summary", h.mt5Summary)
-		sr.Get("/integrations/mt5/analytics/insights", h.mt5Insights)
-		sr.Get("/integrations/mt5/analytics/equity", h.mt5Equity)
+		if h.requireProMW != nil {
+			sr.With(h.requireProMW).Get("/integrations/mt5/analytics/insights", h.mt5Insights)
+			sr.With(h.requireProMW).Get("/integrations/mt5/analytics/equity", h.mt5Equity)
+		} else {
+			sr.Get("/integrations/mt5/analytics/insights", h.mt5Insights)
+			sr.Get("/integrations/mt5/analytics/equity", h.mt5Equity)
+		}
 		sr.Post("/integrations/mt5/analytics/recompute-daily", h.recomputeDaily)
 	})
 }

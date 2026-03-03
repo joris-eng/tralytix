@@ -13,6 +13,7 @@ import (
 	analyticsdelivery "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/delivery/http"
 	analyticstransport "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/transport/http"
 	analyticsusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/usecase"
+	billingdomain "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/domain"
 	billingtransport "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/adapters/http"
 	billingpostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/adapters/postgres"
 	billingapplication "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/application"
@@ -92,12 +93,10 @@ func main() {
 	mt5AnalyticsUC := analyticsusecase.NewGetMT5SummaryUseCase(analyticsRepo)
 	mt5InsightsUC := analyticsusecase.NewGetMT5InsightsUseCase(mt5AnalyticsUC)
 	mt5RecomputeUC := analyticsusecase.NewRecomputeDailyUseCase(analyticsRepo)
-	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, mt5InsightsUC, mt5RecomputeUC, authMW, authRateLimitMW)
 
 	mt5Repo := mt5postgres.NewRepository(dbClient.Pool())
 	mt5Importer := mt5csv.NewImporter()
 	mt5UC := mt5application.NewService(mt5Repo, mt5Importer, clock, cfg.MT5ImportMaxRows)
-	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes, authRateLimitMW)
 
 	billingRepo := billingpostgres.NewRepository(dbClient.Pool())
 	billingService := billingapplication.NewService(
@@ -107,6 +106,9 @@ func main() {
 		cfg.StripePriceMonthly,
 		cfg.StripePriceYearly,
 	)
+	requirePro := platformmiddleware.RequirePlan(billingRepo, billingdomain.PlanPro)
+	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, mt5InsightsUC, mt5RecomputeUC, authMW, authRateLimitMW, requirePro)
+	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes, authRateLimitMW, requirePro)
 	billingHandler := billingtransport.NewHandler(billingService, authMW, cfg.AppBaseURL)
 
 	router := httpx.NewRouter(
