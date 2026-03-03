@@ -50,3 +50,13 @@ export function useAuthConfig(): AuthConfigState {
   const { devLoginEnabled, loadingAuthConfig } = useAuthSessionContext();
   return { devLoginEnabled, loading: loadingAuthConfig };
 }
+
+export function usePlan(): "free" | "pro" {
+  const { userPlan } = useAuthSessionContext();
+  return userPlan;
+}
+
+export function useIsPro(): boolean {
+  const { userPlan } = useAuthSessionContext();
+  return userPlan === "pro";
+}

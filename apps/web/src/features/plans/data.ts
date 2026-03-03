@@ -1,6 +1,6 @@
 import type { FaqItem, PlanModel } from "@/features/plans/model";
 
-export const plansMock: PlanModel[] = [
+export const plans: PlanModel[] = [
   {
     tier: "discovery",
     name: "Decouverte",
@@ -32,7 +32,7 @@ export const plansMock: PlanModel[] = [
   }
 ];
 
-export const plansFaqMock: FaqItem[] = [
+export const plansFaq: FaqItem[] = [
   {
     id: "faq-1",
     question: "Puis-je changer de plan a tout moment ?",

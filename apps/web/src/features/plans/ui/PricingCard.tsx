@@ -1,19 +1,27 @@
-import Link from "next/link";
 import type { PlanModel } from "@/features/plans/model";
 import { FeatureList } from "@/features/plans/ui/FeatureList";
-import { Badge, Card, Heading, Text } from "@/features/ui/primitives";
+import { Badge, Button, Card, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
 
 type PricingCardProps = {
   plan: PlanModel;
+  current?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
+  onAction?: () => void;
 };
 
-export function PricingCard({ plan }: PricingCardProps) {
+export function PricingCard({ plan, current = false, loading = false, disabled = false, onAction }: PricingCardProps) {
   return (
     <Card elevated={plan.highlighted} className={styles.pricingCard}>
       {plan.highlighted ? (
         <div className={styles.popularBadge}>
           <Badge variant="primary">Most popular</Badge>
+        </div>
+      ) : null}
+      {current ? (
+        <div className={styles.popularBadge} style={{ top: 48 }}>
+          <Badge variant="success">Current Plan</Badge>
         </div>
       ) : null}
 
@@ -31,14 +39,14 @@ export function PricingCard({ plan }: PricingCardProps) {
       <FeatureList items={plan.bullets} />
 
       <div className={styles.ctaRow}>
-        <Link
-          href={plan.ctaHref}
-          className="ui-button"
-          data-variant={plan.tier === "pro" ? "primary" : "neutral"}
+        <Button
+          variant={plan.tier === "pro" ? "primary" : "neutral"}
           aria-label={plan.ctaLabel}
+          onClick={onAction}
+          disabled={disabled || loading}
         >
-          {plan.ctaLabel}
-        </Link>
+          {loading ? "Redirecting..." : current ? "Current Plan" : plan.ctaLabel}
+        </Button>
       </div>
     </Card>
   );
