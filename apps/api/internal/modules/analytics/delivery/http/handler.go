@@ -19,6 +19,7 @@ type Handler struct {
 	recomputeUC *analyticsusecase.RecomputeDailyUseCase
 	authMW      authMiddleware
 	rateLimitMW func(http.Handler) http.Handler
+	requireProMW func(http.Handler) http.Handler
 }
 
 func NewHandler(
@@ -27,6 +28,7 @@ func NewHandler(
 	recomputeUC *analyticsusecase.RecomputeDailyUseCase,
 	authMW authMiddleware,
 	rateLimitMW func(http.Handler) http.Handler,
+	requireProMW func(http.Handler) http.Handler,
 ) *Handler {
 	return &Handler{
 		summaryUC:   summaryUC,
@@ -34,6 +36,7 @@ func NewHandler(
 		recomputeUC: recomputeUC,
 		authMW:      authMW,
 		rateLimitMW: rateLimitMW,
+		requireProMW: requireProMW,
 	}
 }
 

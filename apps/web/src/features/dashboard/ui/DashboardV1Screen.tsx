@@ -8,6 +8,7 @@ import { DashboardHeader } from "@/features/dashboard/ui/DashboardHeader";
 import { HeroCards } from "@/features/dashboard/ui/HeroCards";
 import { InsightCardsSection } from "@/features/dashboard/ui/InsightCardsSection";
 import { TopLeaksSection } from "@/features/dashboard/ui/TopLeaksSection";
+import { RequirePro } from "@/shared/auth/RequirePro";
 import { Card, Heading, Skeleton, Text } from "@/features/ui/primitives";
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
 
@@ -82,6 +83,15 @@ function mapTopLeaks(insights: DashboardInsights | null): TopLeakModel[] {
   }));
 }
 
+function UpgradePrompt() {
+  return (
+    <div className="ui-card" style={{ textAlign: "center", padding: "2rem" }}>
+      <Heading>Pro Feature</Heading>
+      <Text className="ui-text-muted">Upgrade to Pro to access this feature.</Text>
+    </div>
+  );
+}
+
 export function DashboardV1Screen() {
   const [mode, setMode] = useState<DashboardMode>("simple");
   const {
@@ -151,16 +161,18 @@ export function DashboardV1Screen() {
         />
       ) : null}
 
-      {insightsLoading ? (
-        <div className={styles.insightsGrid}>
-          <Skeleton height={140} />
-          <Skeleton height={140} />
-        </div>
-      ) : insightsError ? (
-        <Text className="ui-text-error">{insightsError}</Text>
-      ) : (
-        <InsightCardsSection items={insightItems} />
-      )}
+      <RequirePro fallback={<UpgradePrompt />}>
+        {insightsLoading ? (
+          <div className={styles.insightsGrid}>
+            <Skeleton height={140} />
+            <Skeleton height={140} />
+          </div>
+        ) : insightsError ? (
+          <Text className="ui-text-error">{insightsError}</Text>
+        ) : (
+          <InsightCardsSection items={insightItems} />
+        )}
+      </RequirePro>
 
       {mode === "pro" ? (
         <Card>
@@ -177,18 +189,20 @@ export function DashboardV1Screen() {
         </Card>
       ) : null}
 
-      {summaryLoading ? (
-        <div className={styles.breakdownGrid}>
-          <Skeleton height={160} />
-          <Skeleton height={160} />
-          <Skeleton height={160} />
-          <Skeleton height={160} />
-        </div>
-      ) : summaryError ? (
-        <Text className="ui-text-error">{summaryError}</Text>
-      ) : (
-        <BreakdownSection items={breakdownItems} />
-      )}
+      <RequirePro fallback={<UpgradePrompt />}>
+        {summaryLoading ? (
+          <div className={styles.breakdownGrid}>
+            <Skeleton height={160} />
+            <Skeleton height={160} />
+            <Skeleton height={160} />
+            <Skeleton height={160} />
+          </div>
+        ) : summaryError ? (
+          <Text className="ui-text-error">{summaryError}</Text>
+        ) : (
+          <BreakdownSection items={breakdownItems} />
+        )}
+      </RequirePro>
 
       {insightsLoading ? (
         <Skeleton height={220} />

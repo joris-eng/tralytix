@@ -1,12 +1,14 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	identitydomain "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/domain"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 )
 
@@ -27,8 +29,17 @@ func (denyAuthMW) RequireAuth(next http.Handler) http.Handler {
 	})
 }
 
+type fakeUserRepo struct{}
+
+func (fakeUserRepo) GetByID(_ context.Context, userID string) (identitydomain.User, error) {
+	return identitydomain.User{
+		Email: "user@example.com",
+		Plan:  "free",
+	}, nil
+}
+
 func TestHandler_Me_UnauthorizedWhenMiddlewareRejects(t *testing.T) {
-	h := NewHandler(nil, denyAuthMW{}, true)
+	h := NewHandler(nil, fakeUserRepo{}, denyAuthMW{}, true)
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
 
@@ -42,7 +53,7 @@ func TestHandler_Me_UnauthorizedWhenMiddlewareRejects(t *testing.T) {
 }
 
 func TestHandler_Me_ReturnsUserID(t *testing.T) {
-	h := NewHandler(nil, allowAuthMW{}, true)
+	h := NewHandler(nil, fakeUserRepo{}, allowAuthMW{}, true)
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
 
@@ -61,10 +72,13 @@ func TestHandler_Me_ReturnsUserID(t *testing.T) {
 	if got := body["user_id"]; got != "user-123" {
 		t.Fatalf("expected user_id %q, got %q", "user-123", got)
 	}
+	if got := body["plan"]; got != "free" {
+		t.Fatalf("expected plan %q, got %q", "free", got)
+	}
 }
 
 func TestHandler_DevLogin_Disabled_ReturnsForbidden(t *testing.T) {
-	h := NewHandler(nil, allowAuthMW{}, false)
+	h := NewHandler(nil, fakeUserRepo{}, allowAuthMW{}, false)
 	r := chi.NewRouter()
 	h.RegisterRoutes(r)
 
@@ -80,7 +94,7 @@ func TestHandler_DevLogin_Disabled_ReturnsForbidden(t *testing.T) {
 
 func TestHandler_AuthConfig_ReturnsDevLoginFlag(t *testing.T) {
 	t.Run("enabled", func(t *testing.T) {
-		h := NewHandler(nil, allowAuthMW{}, true)
+		h := NewHandler(nil, fakeUserRepo{}, allowAuthMW{}, true)
 		r := chi.NewRouter()
 		h.RegisterRoutes(r)
 
@@ -101,7 +115,7 @@ func TestHandler_AuthConfig_ReturnsDevLoginFlag(t *testing.T) {
 	})
 
 	t.Run("disabled", func(t *testing.T) {
-		h := NewHandler(nil, allowAuthMW{}, false)
+		h := NewHandler(nil, fakeUserRepo{}, allowAuthMW{}, false)
 		r := chi.NewRouter()
 		h.RegisterRoutes(r)
 

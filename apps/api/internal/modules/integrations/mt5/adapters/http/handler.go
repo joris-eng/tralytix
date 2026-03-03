@@ -26,6 +26,7 @@ type Handler struct {
 	authMW         authMiddleware
 	maxUploadBytes int64
 	rateLimitMW    func(http.Handler) http.Handler
+	requireProMW   func(http.Handler) http.Handler
 }
 
 type service interface {
@@ -39,12 +40,14 @@ func NewHandler(
 	authMW authMiddleware,
 	maxUploadBytes int64,
 	rateLimitMW func(http.Handler) http.Handler,
+	requireProMW func(http.Handler) http.Handler,
 ) *Handler {
 	return &Handler{
 		svc:            svc,
 		authMW:         authMW,
 		maxUploadBytes: maxUploadBytes,
 		rateLimitMW:    rateLimitMW,
+		requireProMW:   requireProMW,
 	}
 }
 
@@ -56,7 +59,11 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		}
 		sr.Post("/integrations/mt5/import", h.importCSV)
 		sr.Get("/integrations/mt5/status", h.status)
-		sr.Get("/integrations/mt5/trades", h.listTrades)
+		if h.requireProMW != nil {
+			sr.With(h.requireProMW).Get("/integrations/mt5/trades", h.listTrades)
+		} else {
+			sr.Get("/integrations/mt5/trades", h.listTrades)
+		}
 	})
 }
 
