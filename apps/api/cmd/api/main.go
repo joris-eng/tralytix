@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -9,6 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang-migrate/migrate/v4"
+	migratepostgres "github.com/golang-migrate/migrate/v4/database/postgres"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/joris-eng/tralytix/apps/api/migrations"
 	analyticspostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/data/postgres"
 	analyticsdelivery "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/delivery/http"
 	analyticstransport "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/transport/http"
@@ -38,6 +44,7 @@ import (
 	platformmiddleware "github.com/joris-eng/tralytix/apps/api/internal/platform/middleware"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/postgres"
 	platformtime "github.com/joris-eng/tralytix/apps/api/internal/platform/time"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -64,6 +71,17 @@ func main() {
 		os.Exit(1)
 	}
 	defer dbClient.Close()
+
+	applied, err := runMigrations(cfg.DBDSN)
+	if err != nil {
+		log.Error("run migrations failed", "error", err)
+		os.Exit(1)
+	}
+	if applied {
+		log.Info("migrations applied")
+	} else {
+		log.Info("no new migrations")
+	}
 
 	queries := db.New(dbClient.Pool())
 
@@ -163,4 +181,35 @@ func main() {
 	}
 
 	log.Info("server stopped gracefully")
+}
+
+func runMigrations(dsn string) (bool, error) {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return false, err
+	}
+	defer db.Close()
+
+	driver, err := migratepostgres.WithInstance(db, &migratepostgres.Config{})
+	if err != nil {
+		return false, err
+	}
+
+	source, err := iofs.New(migrations.FS, ".")
+	if err != nil {
+		return false, err
+	}
+
+	m, err := migrate.NewWithInstance("iofs", source, "postgres", driver)
+	if err != nil {
+		return false, err
+	}
+
+	if err := m.Up(); err != nil {
+		if errors.Is(err, migrate.ErrNoChange) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
