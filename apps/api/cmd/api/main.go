@@ -13,6 +13,9 @@ import (
 	analyticsdelivery "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/delivery/http"
 	analyticstransport "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/transport/http"
 	analyticsusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/analytics/usecase"
+	billingtransport "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/adapters/http"
+	billingpostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/adapters/postgres"
+	billingapplication "github.com/joris-eng/tralytix/apps/api/internal/modules/billing/application"
 	identitypostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/data/postgres"
 	identitytransport "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
@@ -96,6 +99,16 @@ func main() {
 	mt5UC := mt5application.NewService(mt5Repo, mt5Importer, clock, cfg.MT5ImportMaxRows)
 	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes, authRateLimitMW)
 
+	billingRepo := billingpostgres.NewRepository(dbClient.Pool())
+	billingService := billingapplication.NewService(
+		billingRepo,
+		cfg.StripeSecretKey,
+		cfg.StripeWebhookSecret,
+		cfg.StripePriceMonthly,
+		cfg.StripePriceYearly,
+	)
+	billingHandler := billingtransport.NewHandler(billingService, authMW, cfg.AppBaseURL)
+
 	router := httpx.NewRouter(
 		httpx.RouterDeps{
 			Logger:         log,
@@ -114,6 +127,7 @@ func main() {
 		analyticsHandler,
 		mt5AnalyticsHandler,
 		mt5Handler,
+		billingHandler,
 	)
 	router = platformmiddleware.RequestID(router)
 
