@@ -1,12 +1,14 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/joris-eng/tralytix/apps/api/internal/modules/identity/domain"
 	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
@@ -19,12 +21,17 @@ type authMiddleware interface {
 
 type Handler struct {
 	loginDevUC     *identityusecase.LoginDevUseCase
+	users          userReader
 	authMW         authMiddleware
 	enableDevLogin bool
 }
 
-func NewHandler(loginDevUC *identityusecase.LoginDevUseCase, authMW authMiddleware, enableDevLogin bool) *Handler {
-	return &Handler{loginDevUC: loginDevUC, authMW: authMW, enableDevLogin: enableDevLogin}
+type userReader interface {
+	GetByID(ctx context.Context, userID string) (domain.User, error)
+}
+
+func NewHandler(loginDevUC *identityusecase.LoginDevUseCase, users userReader, authMW authMiddleware, enableDevLogin bool) *Handler {
+	return &Handler{loginDevUC: loginDevUC, users: users, authMW: authMW, enableDevLogin: enableDevLogin}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
@@ -46,6 +53,7 @@ type devLoginResponse struct {
 
 type meResponse struct {
 	UserID string `json:"user_id"`
+	Plan   string `json:"plan"`
 }
 
 type authConfigResponse struct {
@@ -100,5 +108,11 @@ func (h *Handler) me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.JSON(w, http.StatusOK, meResponse{UserID: userID})
+	user, err := h.users.GetByID(r.Context(), userID)
+	if err != nil {
+		platformerrors.WriteHTTP(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	httpx.JSON(w, http.StatusOK, meResponse{UserID: userID, Plan: user.Plan})
 }

@@ -32,6 +32,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (domain.User,
 	return domain.User{
 		ID:        row.ID,
 		Email:     row.Email,
+		Plan:      "free",
 		CreatedAt: row.CreatedAt,
 	}, nil
 }
@@ -47,6 +48,29 @@ func (r *Repository) CreateUser(ctx context.Context, email string) (domain.User,
 	return domain.User{
 		ID:        row.ID,
 		Email:     row.Email,
+		Plan:      "free",
+		CreatedAt: row.CreatedAt,
+	}, nil
+}
+
+func (r *Repository) GetByID(ctx context.Context, userID string) (domain.User, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return domain.User{}, fmt.Errorf("parse user id: %w", err)
+	}
+
+	row, err := r.q.GetUserByID(ctx, uid)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.User{}, identityusecase.ErrUserNotFound
+		}
+		return domain.User{}, fmt.Errorf("query user by id: %w", err)
+	}
+
+	return domain.User{
+		ID:        row.ID,
+		Email:     row.Email,
+		Plan:      row.Plan,
 		CreatedAt: row.CreatedAt,
 	}, nil
 }

@@ -4,7 +4,6 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { apiFetch } from "@/lib/api";
 import { clearToken, getToken } from "@/lib/auth";
 import { fetchAuthMe } from "@/lib/authApi";
-import { apiClient } from "@/shared/api/apiClient";
 
 type AuthConfigResponse = {
   dev_login_enabled?: boolean;
@@ -39,13 +38,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
     try {
       const me = await fetchAuthMe(token);
-      const mePlan = me.plan === "pro" ? "pro" : me.plan === "free" ? "free" : null;
-      if (mePlan) {
-        setUserPlan(mePlan);
-      } else {
-        const billing = await apiClient.billingPlan();
-        setUserPlan(billing.plan === "pro" ? "pro" : "free");
-      }
+      setUserPlan(me.plan === "pro" ? "pro" : "free");
       setIsAuthenticated(true);
     } catch {
       clearToken();
