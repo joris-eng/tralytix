@@ -51,10 +51,15 @@ export type DashboardViewModel = {
 };
 
 export const dashboardSummarySchema = z.object({
-  trades_count: z.number(),
-  winrate: z.number(),
-  avg_pnl: z.number(),
-  profit_factor: z.number()
+  total_trades: z.number(),
+  total_profit: z.string(),
+  avg_profit: z.string(),
+  winners: z.number(),
+  losers: z.number(),
+  win_rate: z.string(),
+  profit_factor: z.string().nullable(),
+  max_profit: z.string(),
+  min_profit: z.string()
 });
 
 export const dashboardInsightItemSchema = z.object({
