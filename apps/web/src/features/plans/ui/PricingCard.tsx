@@ -34,6 +34,11 @@ export function PricingCard({ plan, current = false, loading = false, disabled =
 
       <div className={styles.priceRow}>
         <Heading level={1}>{plan.priceLabel}</Heading>
+        {plan.priceSub ? (
+          <Text tone="muted" size="sm" style={{ marginTop: 2 }}>
+            {plan.priceSub}
+          </Text>
+        ) : null}
       </div>
 
       <FeatureList items={plan.bullets} />

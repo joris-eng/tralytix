@@ -4,6 +4,7 @@ import { useState } from "react";
 import { apiClient } from "@/shared/api/apiClient";
 import { usePlan } from "@/shared/auth/useSessionState";
 import { plans, plansFaq } from "@/features/plans/data";
+import type { PlanTier } from "@/features/plans/model";
 import { PricingCard } from "@/features/plans/ui/PricingCard";
 import { Card, Divider, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
@@ -16,27 +17,27 @@ const STRIPE_PRICE_YEARLY =
   (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY ?? "").trim() ||
   "price_1T6GddAufOS3IvBw0KLTIECP";
 
-const PRICE_IDS: Record<string, string> = {
-  monthly: STRIPE_PRICE_MONTHLY,
-  yearly:  STRIPE_PRICE_YEARLY,
+const PRICE_BY_TIER: Partial<Record<PlanTier, string>> = {
+  "pro":        STRIPE_PRICE_MONTHLY,
+  "pro-yearly": STRIPE_PRICE_YEARLY,
 };
 
 export function PlansScreen() {
   const plan = usePlan();
-  const [loadingTier, setLoadingTier] = useState<"discovery" | "pro" | null>(null);
+  const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleCheckout(tier: "discovery" | "pro") {
+  async function handleCheckout(tier: PlanTier) {
     setError(null);
-    if (tier !== "pro" || plan === "pro") {
-      return;
-    }
 
-    const priceId = PRICE_IDS.monthly;
+    if (tier === "discovery") return;
+    if (plan === "pro") return;
+
+    const priceId = PRICE_BY_TIER[tier];
     console.log("[plans] handleCheckout tier=%s priceId=%s", tier, priceId);
 
     if (!priceId) {
-      setError("Missing Stripe price ID for Pro plan.");
+      setError("Missing Stripe price ID for this plan.");
       return;
     }
 
@@ -70,9 +71,12 @@ export function PlansScreen() {
           <PricingCard
             key={item.tier}
             plan={item}
-            current={(plan === "free" && item.tier === "discovery") || (plan === "pro" && item.tier === "pro")}
+            current={
+              (plan === "free" && item.tier === "discovery") ||
+              (plan === "pro" && (item.tier === "pro" || item.tier === "pro-yearly"))
+            }
             loading={loadingTier === item.tier}
-            disabled={item.tier === "pro" && plan === "pro"}
+            disabled={(item.tier === "pro" || item.tier === "pro-yearly") && plan === "pro"}
             onAction={() => void handleCheckout(item.tier)}
           />
         ))}
