@@ -10,6 +10,17 @@ body {
   color: var(--ui-color-text);
   font-family: var(--ui-font-family);
   line-height: var(--ui-line-height-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* All numeric/metric elements use mono */
+.metric,
+.ui-metric,
+[data-metric],
+.font-mono {
+  font-family: var(--ui-font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 a {
@@ -18,13 +29,14 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--ui-focus-ring);
+  outline: 1px solid var(--ui-focus-ring);
   outline-offset: 2px;
   border-radius: var(--ui-radius-sm);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
 }
 
 ::selection {
-  background: rgba(59, 130, 246, 0.22);
+  background: rgba(0, 212, 255, 0.18);
   color: var(--ui-color-text);
 }
 

@@ -1,0 +1,69 @@
+.grid {
+  display: grid;
+  gap: var(--ui-space-3);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-left: 3px solid var(--card-accent, var(--ui-color-border));
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-4) var(--ui-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
+  cursor: default;
+}
+
+.card:hover {
+  background: var(--ui-color-surface-elevated);
+  border-color: var(--ui-color-border);
+  border-left-color: var(--card-accent, var(--ui-color-primary));
+  transform: translateY(-1px);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+}
+
+.label {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.value {
+  font-family: var(--ui-font-mono);
+  font-size: 2.6rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.context {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-subtle);
+  margin-top: var(--ui-space-1);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

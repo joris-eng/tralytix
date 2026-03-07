@@ -4,7 +4,8 @@ import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthSessionContext } from "@/shared/auth/AuthSessionProvider";
 import { useIsPro } from "@/shared/auth/useSessionState";
-import { Button, Heading, Skeleton, Text } from "@/features/ui/primitives";
+import { Skeleton } from "@/features/ui/primitives";
+import styles from "@/shared/auth/requirePro.module.css";
 
 type RequireProProps = {
   children: ReactNode;
@@ -24,14 +25,19 @@ export function RequirePro({ children, fallback }: RequireProProps) {
     if (fallback) return <>{fallback}</>;
 
     return (
-      <div className="ui-card" style={{ textAlign: "center", padding: "2rem" }}>
-        <Heading>Pro Feature</Heading>
-        <Text className="ui-text-muted">Upgrade to Pro to access this feature.</Text>
-        <div style={{ marginTop: 12 }}>
-          <Button variant="primary" onClick={() => router.push("/plans")}>
-            Upgrade to Pro
-          </Button>
-        </div>
+      <div className={styles.gate}>
+        <div className={styles.lockIcon} aria-hidden>🔒</div>
+        <h3 className={styles.title}>Pro Feature</h3>
+        <p className={styles.subtitle}>
+          Upgrade to Pro to unlock detailed analytics, insights, and trade breakdown.
+        </p>
+        <button
+          type="button"
+          className={styles.cta}
+          onClick={() => router.push("/plans")}
+        >
+          Upgrade to Pro →
+        </button>
       </div>
     );
   }
