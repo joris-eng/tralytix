@@ -1,10 +1,11 @@
-export type PlanTier = "discovery" | "pro";
+export type PlanTier = "discovery" | "pro" | "pro-yearly";
 
 export type PlanModel = {
   tier: PlanTier;
   name: string;
   audience: string;
   priceLabel: string;
+  priceSub?: string;
   bullets: string[];
   ctaLabel: string;
   ctaHref: string;
