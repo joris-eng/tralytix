@@ -10,46 +10,124 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--ui-color-bg);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family);
 }
 
 a {
   color: inherit;
   text-decoration: none;
 }
-.container {
-  max-width: 1080px;
+
+/* ─── App shell ─── */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-5);
+  padding: 0 var(--ui-space-6);
+  height: 52px;
+  background: var(--ui-color-bg);
+  border-bottom: 1px solid var(--ui-color-border);
+  backdrop-filter: blur(8px);
+}
+
+.app-nav-logo {
+  font-family: var(--ui-font-family);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  color: var(--ui-color-text);
+  flex-shrink: 0;
+}
+
+.app-nav-dot {
+  color: var(--ui-color-primary);
+}
+
+.app-nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  flex: 1;
+}
+
+.app-nav-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+}
+
+.app-main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  padding: 24px;
+  padding: var(--ui-space-6) var(--ui-space-5);
+}
+
+/* ─── Legacy nav links (used by AuthNavLinks) ─── */
+.app-nav-links a {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  letter-spacing: 0.04em;
+  color: var(--ui-color-text-muted);
+  padding: 6px 10px;
+  border-radius: var(--ui-radius-sm);
+  transition: color 150ms ease, background 150ms ease;
+  text-transform: uppercase;
+}
+
+.app-nav-links a:hover {
+  color: var(--ui-color-text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Session badge (used by AuthNavLinks) ─── */
+.session-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-muted);
+}
+
+.session-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ui-color-success);
+  flex-shrink: 0;
+}
+
+.session-badge.loading::before {
+  background: var(--ui-color-warning);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+/* ─── Legacy container fallback ─── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--ui-space-6) var(--ui-space-5);
 }
 
 .nav {
   display: flex;
   gap: 16px;
   margin-bottom: 24px;
-}
-
-.nav a {
-  color: var(--muted);
-}
-
-.nav a:hover {
-  color: var(--text);
-}
-
-.session-badge {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1;
-  padding: 8px 10px;
-}
-
-.session-badge.loading {
-  animation: pulse 1.2s ease-in-out infinite;
 }
 
 .card {

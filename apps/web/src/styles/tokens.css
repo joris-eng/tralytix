@@ -2,26 +2,30 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* Surfaces */
-  --ui-color-bg: #090d14;
-  --ui-color-surface: #111827;
-  --ui-color-surface-elevated: #18212f;
-  --ui-color-border: #273244;
-  --ui-color-divider: #1e293b;
+  /* Surfaces — Precision Trading Terminal */
+  --ui-color-bg: #0a0b0d;
+  --ui-color-surface: #111318;
+  --ui-color-surface-elevated: #1a1d24;
+  --ui-color-border: rgba(255, 255, 255, 0.08);
+  --ui-color-divider: rgba(255, 255, 255, 0.04);
 
   /* Typography */
-  --ui-color-text: #e5ebf5;
-  --ui-color-text-muted: #9aa8bd;
-  --ui-color-text-subtle: #7f8ea5;
+  --ui-color-text: #f0f2f5;
+  --ui-color-text-muted: #8892a4;
+  --ui-color-text-subtle: #4a5568;
 
-  /* Limited accents */
-  --ui-color-primary: #3c82f6;
-  --ui-color-warning: #f59e0b;
-  --ui-color-success: #22c55e;
+  /* Accents */
+  --ui-color-primary: #00d4ff;
+  --ui-color-success: #00e5a0;
+  --ui-color-warning: #ffb547;
+  --ui-color-danger: #ff4d6d;
 
-  /* States */
-  --ui-color-danger: #ef4444;
-  --ui-focus-ring: #60a5fa;
+  /* Focus */
+  --ui-focus-ring: #00d4ff;
+
+  /* Fonts */
+  --ui-font-family: 'Syne', system-ui, -apple-system, sans-serif;
+  --ui-font-mono: 'DM Mono', 'Fira Mono', ui-monospace, monospace;
 
   /* Spacing scale */
   --ui-space-1: 4px;
@@ -38,21 +42,20 @@
   --ui-radius-lg: 16px;
   --ui-radius-pill: 999px;
 
-  /* Typography scale */
-  --ui-font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --ui-font-size-xs: 12px;
-  --ui-font-size-sm: 14px;
-  --ui-font-size-md: 16px;
+  /* Font sizes */
+  --ui-font-size-xs: 11px;
+  --ui-font-size-sm: 13px;
+  --ui-font-size-md: 15px;
   --ui-font-size-lg: 20px;
   --ui-font-size-xl: 28px;
   --ui-line-height-tight: 1.2;
   --ui-line-height-normal: 1.5;
 
-  /* Shadows (subtle, no glow) */
-  --ui-shadow-sm: 0 1px 2px rgba(2, 6, 23, 0.45);
-  --ui-shadow-md: 0 8px 24px rgba(2, 6, 23, 0.28);
+  /* Shadows */
+  --ui-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --ui-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
 
-  /* Backward aliases for legacy classes */
+  /* Backward aliases */
   --bg: var(--ui-color-bg);
   --bg-soft: var(--ui-color-surface);
   --text: var(--ui-color-text);

@@ -10,6 +10,7 @@ import { InsightCardsSection } from "@/features/dashboard/ui/InsightCardsSection
 import { TopLeaksSection } from "@/features/dashboard/ui/TopLeaksSection";
 import { RequirePro } from "@/shared/auth/RequirePro";
 import { Card, Heading, Skeleton, Text } from "@/features/ui/primitives";
+// Note: Card/Heading imported for advanced-filters section below
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
 
 function formatPercent(value: number): string {
@@ -131,9 +132,13 @@ export function DashboardV1Screen() {
   const insightItems = useMemo(() => mapInsights(insights), [insights]);
   const topLeaksRows = useMemo(() => mapTopLeaks(insights), [insights]);
 
-  const headerSubtitle = summaryError || insightsError
-    ? "Some dashboard sections are unavailable right now."
-    : "Actionable portfolio diagnostics powered by MT5 analytics.";
+  const headerSubtitle = useMemo(() => {
+    if (summaryError || insightsError) return "Some data is temporarily unavailable.";
+    if (!summary) return "Loading analytics…";
+    const winRate = parseMetric(summary.win_rate);
+    const totalTrades = summary.total_trades;
+    return `${totalTrades} trades · ${(winRate * 100).toFixed(1)}% win rate · Last 90 days`;
+  }, [summary, summaryError, insightsError]);
 
   return (
     <section className={styles.page}>
