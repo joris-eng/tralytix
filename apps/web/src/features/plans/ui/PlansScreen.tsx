@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { apiClient } from "@/shared/api/apiClient";
 import { usePlan } from "@/shared/auth/useSessionState";
 import { plans, plansFaq } from "@/features/plans/data";
@@ -8,42 +8,51 @@ import { PricingCard } from "@/features/plans/ui/PricingCard";
 import { Card, Divider, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
 
+const STRIPE_PRICE_MONTHLY =
+  (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY ?? "").trim() ||
+  "price_1T6GddAufOS3IvBwBKmRv2g0";
+
+const STRIPE_PRICE_YEARLY =
+  (process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_YEARLY ?? "").trim() ||
+  "price_1T6GddAufOS3IvBw0KLTIECP";
+
+const PRICE_IDS: Record<string, string> = {
+  monthly: STRIPE_PRICE_MONTHLY,
+  yearly:  STRIPE_PRICE_YEARLY,
+};
+
 export function PlansScreen() {
   const plan = usePlan();
   const [loadingTier, setLoadingTier] = useState<"discovery" | "pro" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const pricesByTier = useMemo(
-    () => ({
-      discovery: "",
-      pro: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY ?? ""
-    }),
-    []
-  );
-
   async function handleCheckout(tier: "discovery" | "pro") {
     setError(null);
-    if (tier !== "pro") {
+    if (tier !== "pro" || plan === "pro") {
       return;
     }
-    if (plan === "pro") {
-      return;
-    }
-    const priceId = pricesByTier[tier];
+
+    const priceId = PRICE_IDS.monthly;
+    console.log("[plans] handleCheckout tier=%s priceId=%s", tier, priceId);
+
     if (!priceId) {
       setError("Missing Stripe price ID for Pro plan.");
       return;
     }
+
     try {
       setLoadingTier(tier);
+      console.log("[plans] calling billingCheckout with priceId=%s", priceId);
       const payload = await apiClient.billingCheckout(priceId);
+      console.log("[plans] checkout response:", payload);
       if (!payload.checkout_url) {
         setError("Checkout URL missing from billing response.");
         return;
       }
       window.location.href = payload.checkout_url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to start checkout");
+      console.error("[plans] checkout error:", err);
+      setError(err instanceof Error ? err.message : "Unable to start checkout. Please try again.");
     } finally {
       setLoadingTier(null);
     }
