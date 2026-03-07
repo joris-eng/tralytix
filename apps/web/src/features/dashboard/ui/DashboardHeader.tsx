@@ -25,7 +25,7 @@ export function DashboardHeader({ title, subtitle, rangeLabel, mode, onModeChang
             {subtitle}
           </Text>
           <div className={styles.headerMeta} style={{ marginTop: 12 }}>
-            <Badge variant="primary">Dashboard V1</Badge>
+            <Badge variant="primary">Dashboard</Badge>
             <Badge variant="neutral">{rangeLabel}</Badge>
           </div>
         </div>

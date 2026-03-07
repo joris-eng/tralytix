@@ -138,7 +138,7 @@ export function DashboardV1Screen() {
   return (
     <section className={styles.page}>
       <DashboardHeader
-        title="Performance Intelligence"
+        title="Dashboard"
         subtitle={headerSubtitle}
         rangeLabel="Last 30 days"
         mode={mode}
