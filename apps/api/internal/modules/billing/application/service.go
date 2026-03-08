@@ -101,7 +101,10 @@ func (s *Service) CreateCheckoutSession(ctx context.Context, userID, priceID, su
 }
 
 func (s *Service) HandleWebhook(ctx context.Context, payload []byte, sigHeader string) error {
-	event, err := webhook.ConstructEvent(payload, sigHeader, s.webhookSecret)
+	event, err := webhook.ConstructEventWithOptions(payload, sigHeader, s.webhookSecret,
+		webhook.ConstructEventOptions{
+			IgnoreAPIVersionMismatch: true, // Stripe dashboard may run an older API version than the SDK expects
+		})
 	if err != nil {
 		log.Printf("[billing/webhook] signature verification failed: %v (sig_header_len=%d, secret_set=%v)",
 			err, len(sigHeader), s.webhookSecret != "")
