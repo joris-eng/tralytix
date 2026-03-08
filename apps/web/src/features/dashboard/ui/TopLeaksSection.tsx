@@ -1,7 +1,14 @@
 import type { DashboardMode, TopLeakModel } from "@/features/dashboard/model";
 import Link from "next/link";
-import { Badge, Heading, Skeleton, Text } from "@/features/ui/primitives";
+import { Heading, Skeleton, Text } from "@/features/ui/primitives";
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
+
+function impactBorderColor(impact: string): string {
+  const lower = impact.toLowerCase();
+  if (lower.includes("high")) return "#ff4d6d";
+  if (lower.includes("med")) return "#ffb547";
+  return "#00e5a0";
+}
 
 type TopLeaksSectionProps = {
   mode: DashboardMode;
@@ -22,17 +29,27 @@ function TablePlaceholder({ rows }: { rows: TopLeakModel[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={row.id}>
-              <td>{row.leak}</td>
-              <td>{row.impact}</td>
-              <td>{row.frequency}</td>
-              <td>{row.owner}</td>
-              <td>
-                <Badge variant={row.status === "open" ? "warning" : "neutral"}>{row.status.toUpperCase()}</Badge>
-              </td>
-            </tr>
-          ))}
+          {rows.map((row, i) => {
+            const borderColor = impactBorderColor(row.impact);
+            return (
+              <tr key={row.id} className={i % 2 === 0 ? styles.tableRowOdd : undefined}>
+                <td style={{ borderLeft: `3px solid ${borderColor}`, paddingLeft: 10 }}>
+                  {row.leak}
+                </td>
+                <td>{row.impact}</td>
+                <td>{row.frequency}</td>
+                <td>{row.owner}</td>
+                <td>
+                  <span
+                    className={styles.statusPill}
+                    data-status={row.status}
+                  >
+                    {row.status.toUpperCase()}
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

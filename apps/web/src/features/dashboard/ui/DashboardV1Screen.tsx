@@ -10,6 +10,7 @@ import { InsightCardsSection } from "@/features/dashboard/ui/InsightCardsSection
 import { TopLeaksSection } from "@/features/dashboard/ui/TopLeaksSection";
 import { RequirePro } from "@/shared/auth/RequirePro";
 import { Card, Heading, Skeleton, Text } from "@/features/ui/primitives";
+// Note: Card/Heading imported for advanced-filters section below
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
 
 function formatPercent(value: number): string {
@@ -20,27 +21,42 @@ function formatDecimal(value: number): string {
   return value.toFixed(2);
 }
 
+function parseMetric(value: string | null | undefined): number {
+  if (!value) return 0;
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function computePerformanceScore(winRate: number, profitFactor: number): number {
+  const winRateScore = Math.max(0, Math.min(100, Math.round(winRate * 100)));
+  const pfScore = Math.max(0, Math.min(100, Math.round(Math.min(profitFactor, 2) * 50)));
+  return Math.round(winRateScore * 0.6 + pfScore * 0.4);
+}
+
 function mapBreakdown(summary: DashboardSummary | null): BreakdownModel[] {
   if (!summary) return [];
 
-  const edgeScore = Math.max(0, Math.min(100, Math.round(summary.winrate * 100)));
-  const riskScore = Math.max(0, Math.min(100, Math.round(Math.min(summary.profit_factor, 2) * 40)));
-  const disciplineScore = Math.max(0, Math.min(100, Math.round((summary.profit_factor / 2) * 100)));
-  const efficiencyScore = Math.max(0, Math.min(100, Math.round(50 + summary.avg_pnl / 4)));
+  const winRate = parseMetric(summary.win_rate);
+  const profitFactor = parseMetric(summary.profit_factor);
+  const avgProfit = parseMetric(summary.avg_profit);
+  const edgeScore = Math.max(0, Math.min(100, Math.round(winRate * 100)));
+  const riskScore = Math.max(0, Math.min(100, Math.round(Math.min(profitFactor, 2) * 40)));
+  const disciplineScore = Math.max(0, Math.min(100, Math.round((profitFactor / 2) * 100)));
+  const efficiencyScore = Math.max(0, Math.min(100, Math.round(50 + avgProfit / 4)));
 
   return [
     {
       id: "edge",
       label: "Edge",
       score: String(edgeScore),
-      detail: `Win rate based on ${summary.trades_count} trades.`,
+      detail: `Win rate based on ${summary.total_trades} trades.`,
       trendDirection: edgeScore >= 55 ? "up" : "flat"
     },
     {
       id: "risk",
       label: "Risk",
       score: String(riskScore),
-      detail: `Profit factor currently at ${formatDecimal(summary.profit_factor)}.`,
+      detail: `Profit factor currently at ${formatDecimal(profitFactor)}.`,
       trendDirection: riskScore >= 50 ? "up" : "down"
     },
     {
@@ -48,14 +64,14 @@ function mapBreakdown(summary: DashboardSummary | null): BreakdownModel[] {
       label: "Discipline",
       score: String(disciplineScore),
       detail: "Execution consistency derived from risk-adjusted return profile.",
-      trendDirection: summary.profit_factor >= 1 ? "up" : "down"
+      trendDirection: profitFactor >= 1 ? "up" : "down"
     },
     {
       id: "efficiency",
       label: "Efficiency",
       score: String(efficiencyScore),
-      detail: `Average PnL per trade: ${formatDecimal(summary.avg_pnl)}.`,
-      trendDirection: summary.avg_pnl >= 0 ? "up" : "down"
+      detail: `Average PnL per trade: ${formatDecimal(avgProfit)}.`,
+      trendDirection: avgProfit >= 0 ? "up" : "down"
     }
   ];
 }
@@ -67,7 +83,8 @@ function mapInsights(insights: DashboardInsights | null): InsightModel[] {
     title: item.title,
     interpretation: item.detail,
     recommendation: `${insights.recommended_action.title}: ${insights.recommended_action.detail}`,
-    ctaLabel: "Review action"
+    ctaLabel: "Review action",
+    severity: item.severity
   }));
 }
 
@@ -116,14 +133,18 @@ export function DashboardV1Screen() {
   const insightItems = useMemo(() => mapInsights(insights), [insights]);
   const topLeaksRows = useMemo(() => mapTopLeaks(insights), [insights]);
 
-  const headerSubtitle = summaryError || insightsError
-    ? "Some dashboard sections are unavailable right now."
-    : "Actionable portfolio diagnostics powered by MT5 analytics.";
+  const headerSubtitle = useMemo(() => {
+    if (summaryError || insightsError) return "Some data is temporarily unavailable.";
+    if (!summary) return "Loading analytics…";
+    const winRate = parseMetric(summary.win_rate);
+    const totalTrades = summary.total_trades;
+    return `${totalTrades} trades · ${(winRate * 100).toFixed(1)}% win rate · Last 90 days`;
+  }, [summary, summaryError, insightsError]);
 
   return (
     <section className={styles.page}>
       <DashboardHeader
-        title="Performance Intelligence"
+        title="Dashboard"
         subtitle={headerSubtitle}
         rangeLabel="Last 30 days"
         mode={mode}
@@ -135,30 +156,46 @@ export function DashboardV1Screen() {
           <Skeleton height={150} />
           <Skeleton height={150} />
           <Skeleton height={150} />
+          <Skeleton height={150} />
         </div>
       ) : summaryError ? (
         <Text className="ui-text-error">{summaryError}</Text>
       ) : summary ? (
-        <HeroCards
-          performanceScore={{
-            label: "Performance score",
-            value: `${Math.round(summary.profit_factor * 40)}`,
-            context: `${summary.trades_count} trades analyzed.`,
-            tone: summary.profit_factor >= 1 ? "success" : "warning"
-          }}
-          percentile={{
-            label: "Win rate",
-            value: formatPercent(summary.winrate),
-            context: "Derived from closed trades.",
-            tone: summary.winrate >= 0.5 ? "primary" : "warning"
-          }}
-          consistency={{
-            label: "Profit factor",
-            value: formatDecimal(summary.profit_factor),
-            context: `Avg PnL ${formatDecimal(summary.avg_pnl)}.`,
-            tone: summary.profit_factor >= 1 ? "success" : "warning"
-          }}
-        />
+        (() => {
+          const winRate = parseMetric(summary.win_rate);
+          const profitFactor = parseMetric(summary.profit_factor);
+          const avgProfit = parseMetric(summary.avg_profit);
+          const totalProfit = parseMetric(summary.total_profit);
+          const performanceScore = computePerformanceScore(winRate, profitFactor);
+          return (
+            <HeroCards
+              performanceScore={{
+                label: "Performance score",
+                value: `${performanceScore}`,
+                context: `${summary.total_trades} trades analyzed.`,
+                tone: performanceScore >= 60 ? "success" : performanceScore >= 40 ? "warning" : "danger"
+              }}
+              winRate={{
+                label: "Win rate",
+                value: formatPercent(winRate),
+                context: "Derived from closed trades.",
+                tone: winRate >= 0.5 ? "success" : winRate >= 0.4 ? "warning" : "danger"
+              }}
+              profitFactor={{
+                label: "Profit factor",
+                value: formatDecimal(profitFactor),
+                context: `Avg PnL ${formatDecimal(avgProfit)}.`,
+                tone: profitFactor >= 1.5 ? "success" : profitFactor >= 1.0 ? "warning" : "danger"
+              }}
+              totalProfit={{
+                label: "Total profit",
+                value: `${totalProfit >= 0 ? "+" : ""}${formatDecimal(totalProfit)}`,
+                context: `${summary.winners}W / ${summary.losers}L`,
+                tone: totalProfit >= 0 ? "success" : "danger"
+              }}
+            />
+          );
+        })()
       ) : null}
 
       <RequirePro fallback={<UpgradePrompt />}>

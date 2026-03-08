@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export type DashboardMode = "simple" | "pro";
 
-export type HeroCardTone = "primary" | "warning" | "success";
+export type HeroCardTone = "primary" | "warning" | "success" | "danger";
 
 export type HeroMetric = {
   label: string;
@@ -17,6 +17,7 @@ export type InsightModel = {
   interpretation: string;
   recommendation: string;
   ctaLabel: string;
+  severity?: string; // "high" | "medium" | "low" from API
 };
 
 export type BreakdownModel = {
@@ -51,10 +52,15 @@ export type DashboardViewModel = {
 };
 
 export const dashboardSummarySchema = z.object({
-  trades_count: z.number(),
-  winrate: z.number(),
-  avg_pnl: z.number(),
-  profit_factor: z.number()
+  total_trades: z.number(),
+  total_profit: z.string(),
+  avg_profit: z.string(),
+  winners: z.number(),
+  losers: z.number(),
+  win_rate: z.string(),
+  profit_factor: z.string().nullable(),
+  max_profit: z.string(),
+  min_profit: z.string()
 });
 
 export const dashboardInsightItemSchema = z.object({

@@ -1,40 +1,55 @@
-import type { HeroMetric } from "@/features/dashboard/model";
-import { Badge, Card, Heading, Text } from "@/features/ui/primitives";
-import styles from "@/features/dashboard/ui/dashboardV1.module.css";
+import type { HeroMetric, HeroCardTone } from "@/features/dashboard/model";
+import styles from "@/features/dashboard/ui/heroCards.module.css";
+
+function toneToAccent(tone: HeroCardTone): string {
+  switch (tone) {
+    case "success": return "var(--ui-color-success)";
+    case "warning": return "var(--ui-color-warning)";
+    case "danger":  return "var(--ui-color-danger)";
+    case "primary": return "var(--ui-color-primary)";
+    default:        return "var(--ui-color-text)";
+  }
+}
 
 type HeroMetricCardProps = {
   metric: HeroMetric;
 };
 
 function HeroMetricCard({ metric }: HeroMetricCardProps) {
+  const accent = toneToAccent(metric.tone);
+
   return (
-    <Card>
-      <div className={styles.cardHeader}>
-        <Heading level={3}>{metric.label}</Heading>
-        <Badge variant={metric.tone}>{metric.tone.toUpperCase()}</Badge>
+    <div
+      className={styles.card}
+      style={{ "--card-accent": accent } as React.CSSProperties}
+    >
+      <div className={styles.cardTop}>
+        <span className={styles.label}>{metric.label}</span>
+        <span className={styles.dot} style={{ background: accent }} />
       </div>
-      <Heading level={1} className={styles.metricValue}>
+      <div className={styles.value} style={{ color: accent }}>
         {metric.value}
-      </Heading>
-      <Text tone="muted" size="sm">
-        {metric.context}
-      </Text>
-    </Card>
+      </div>
+      <div className={styles.context}>{metric.context}</div>
+      <div className={styles.cardSparkline} />
+    </div>
   );
 }
 
 type HeroCardsProps = {
   performanceScore: HeroMetric;
-  percentile: HeroMetric;
-  consistency: HeroMetric;
+  winRate: HeroMetric;
+  profitFactor: HeroMetric;
+  totalProfit: HeroMetric;
 };
 
-export function HeroCards({ performanceScore, percentile, consistency }: HeroCardsProps) {
+export function HeroCards({ performanceScore, winRate, profitFactor, totalProfit }: HeroCardsProps) {
   return (
-    <section className={styles.heroGrid}>
+    <section className={styles.grid}>
       <HeroMetricCard metric={performanceScore} />
-      <HeroMetricCard metric={percentile} />
-      <HeroMetricCard metric={consistency} />
+      <HeroMetricCard metric={winRate} />
+      <HeroMetricCard metric={profitFactor} />
+      <HeroMetricCard metric={totalProfit} />
     </section>
   );
 }
