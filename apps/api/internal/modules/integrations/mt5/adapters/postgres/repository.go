@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -114,6 +115,7 @@ WHERE account_id = $1`
 func (r *Repository) ListTrades(ctx context.Context, accountID string, limit, offset int) ([]domain.Trade, error) {
 	uid, err := uuid.Parse(accountID)
 	if err != nil {
+		log.Printf("[mt5/repo] list trades error: parse account_id %q: %v", accountID, err)
 		return nil, fmt.Errorf("parse account id: %w", err)
 	}
 
@@ -129,6 +131,7 @@ LIMIT $2 OFFSET $3`
 
 	rows, err := r.pool.Query(ctx, q, uid, limit, offset)
 	if err != nil {
+		log.Printf("[mt5/repo] list trades error: query: %v", err)
 		return nil, fmt.Errorf("query trades: %w", err)
 	}
 	defer rows.Close()
@@ -136,7 +139,7 @@ LIMIT $2 OFFSET $3`
 	trades := make([]domain.Trade, 0, limit)
 	for rows.Next() {
 		var trade domain.Trade
-		var tradeID uuid.UUID
+		var tradeID int64        // id column is BIGINT (serial), not UUID
 		var tradeAccountID uuid.UUID
 		if err := rows.Scan(
 			&tradeID,
@@ -156,14 +159,16 @@ LIMIT $2 OFFSET $3`
 			&trade.SourceHash,
 			&trade.ImportedAt,
 		); err != nil {
-			return nil, fmt.Errorf("query trades: %w", err)
+			log.Printf("[mt5/repo] list trades error: scan row: %v", err)
+			return nil, fmt.Errorf("scan trade row: %w", err)
 		}
 		trade.ID = fmt.Sprintf("%d", tradeID)
 		trade.AccountID = tradeAccountID.String()
 		trades = append(trades, trade)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("query trades: %w", err)
+		log.Printf("[mt5/repo] list trades error: rows iteration: %v", err)
+		return nil, fmt.Errorf("iterate trade rows: %w", err)
 	}
 
 	return trades, nil
