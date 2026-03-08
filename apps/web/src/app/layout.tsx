@@ -5,8 +5,8 @@ import { LogoutButton } from "@/features/auth/ui/LogoutButton";
 import { AuthSessionProvider } from "@/shared/auth/AuthSessionProvider";
 
 export const metadata: Metadata = {
-  title: "Trading SaaS",
-  description: "MVP front for trading-saas API"
+  title: "Tralytix",
+  description: "Precision trading analytics terminal"
 };
 
 export default function RootLayout({
@@ -14,15 +14,32 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>
         <AuthSessionProvider>
-          <main className="container">
-            <nav className="nav">
-              <AuthNavLinks />
-              <LogoutButton />
+          <div className="app-shell">
+            <nav className="app-nav">
+              <div className="app-nav-logo">
+                TRALYTIX<span className="app-nav-dot">.</span>
+              </div>
+              <div className="app-nav-links">
+                <AuthNavLinks />
+              </div>
+              <div className="app-nav-actions">
+                <LogoutButton />
+              </div>
             </nav>
-            {children}
-          </main>
+            <main className="app-main">
+              {children}
+            </main>
+          </div>
         </AuthSessionProvider>
       </body>
     </html>

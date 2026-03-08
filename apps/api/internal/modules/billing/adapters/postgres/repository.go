@@ -34,7 +34,7 @@ func (r *Repository) GetUserPlan(ctx context.Context, userID string) (domain.Pla
 	}
 
 	switch domain.Plan(plan) {
-	case domain.PlanFree, domain.PlanPro:
+	case domain.PlanFree, domain.PlanPro, domain.PlanElite:
 		return domain.Plan(plan), nil
 	default:
 		return "", domain.ErrInvalidPlan

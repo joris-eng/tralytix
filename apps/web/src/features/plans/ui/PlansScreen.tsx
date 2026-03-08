@@ -1,49 +1,59 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { apiClient } from "@/shared/api/apiClient";
 import { usePlan } from "@/shared/auth/useSessionState";
 import { plans, plansFaq } from "@/features/plans/data";
+import type { BillingPeriod, PlanTier } from "@/features/plans/model";
 import { PricingCard } from "@/features/plans/ui/PricingCard";
 import { Card, Divider, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
 
 export function PlansScreen() {
-  const plan = usePlan();
-  const [loadingTier, setLoadingTier] = useState<"discovery" | "pro" | null>(null);
+  const currentPlan = usePlan();
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const pricesByTier = useMemo(
-    () => ({
-      discovery: "",
-      pro: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_MONTHLY ?? ""
-    }),
-    []
-  );
-
-  async function handleCheckout(tier: "discovery" | "pro") {
+  async function handleCheckout(tier: PlanTier) {
     setError(null);
-    if (tier !== "pro") {
-      return;
-    }
-    if (plan === "pro") {
-      return;
-    }
-    const priceId = pricesByTier[tier];
+    if (tier === "free") return;
+
+    const planData = plans.find((p) => p.tier === tier);
+    if (!planData) return;
+
+    const priceId =
+      billingPeriod === "yearly"
+        ? planData.yearlyPriceId
+        : planData.monthlyPriceId;
+
+    console.log("[plans] handleCheckout tier=%s period=%s priceId=%s", tier, billingPeriod, priceId);
+
     if (!priceId) {
-      setError("Missing Stripe price ID for Pro plan.");
+      setError(`Missing Stripe price ID for ${tier} plan.`);
       return;
     }
+
     try {
       setLoadingTier(tier);
+      console.log("[plans] calling billingCheckout with priceId=%s", priceId);
       const payload = await apiClient.billingCheckout(priceId);
+      console.log("[plans] checkout response:", payload);
       if (!payload.checkout_url) {
         setError("Checkout URL missing from billing response.");
         return;
       }
       window.location.href = payload.checkout_url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to start checkout");
+      console.error("[plans] checkout error:", err);
+      const isAbort =
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError");
+      if (isAbort) {
+        setError("La connexion a pris trop de temps. Réessaie dans quelques secondes.");
+      } else {
+        setError(err instanceof Error ? err.message : "Impossible de démarrer le paiement. Réessaie.");
+      }
     } finally {
       setLoadingTier(null);
     }
@@ -53,24 +63,43 @@ export function PlansScreen() {
     <section className={styles.page}>
       <header className={styles.header}>
         <Heading level={1}>Plans</Heading>
-        <Text tone="muted">Choisis une experience adaptee a ton niveau, sans complexite inutile.</Text>
+        <Text tone="muted">Choisissez une expérience adaptée à votre niveau.</Text>
       </header>
+
+      {/* Billing period toggle */}
+      <div className={styles.billingToggle}>
+        <button
+          type="button"
+          className={billingPeriod === "monthly" ? styles.toggleActive : styles.toggleInactive}
+          onClick={() => setBillingPeriod("monthly")}
+        >
+          Mensuel
+        </button>
+        <button
+          type="button"
+          className={billingPeriod === "yearly" ? styles.toggleActive : styles.toggleInactive}
+          onClick={() => setBillingPeriod("yearly")}
+        >
+          Annuel <span className={styles.savingsBadge}>2 mois offerts</span>
+        </button>
+      </div>
 
       <section className={styles.comparisonGrid} aria-label="Plan comparison">
         {plans.map((item) => (
           <PricingCard
             key={item.tier}
             plan={item}
-            current={(plan === "free" && item.tier === "discovery") || (plan === "pro" && item.tier === "pro")}
+            billingPeriod={billingPeriod}
+            current={currentPlan === item.tier || (currentPlan === "free" && item.tier === "free")}
             loading={loadingTier === item.tier}
-            disabled={item.tier === "pro" && plan === "pro"}
+            disabled={item.tier !== "free" && currentPlan === item.tier}
             onAction={() => void handleCheckout(item.tier)}
           />
         ))}
       </section>
 
       {error ? (
-        <Text className="ui-text-error" size="sm">
+        <Text className="ui-text-error" size="sm" style={{ textAlign: "center", marginTop: 16 }}>
           {error}
         </Text>
       ) : null}

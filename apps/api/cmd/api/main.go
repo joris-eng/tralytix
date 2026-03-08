@@ -121,10 +121,13 @@ func main() {
 		billingRepo,
 		cfg.StripeSecretKey,
 		cfg.StripeWebhookSecret,
-		cfg.StripePriceMonthly,
-		cfg.StripePriceYearly,
+		cfg.StripePriceProMonthly,
+		cfg.StripePriceProYearly,
+		cfg.StripePriceEliteMonthly,
+		cfg.StripePriceEliteYearly,
 	)
-	requirePro := platformmiddleware.RequirePlan(billingRepo, billingdomain.PlanPro)
+	// Pro routes: accessible by both pro and elite users.
+	requirePro := platformmiddleware.RequirePlan(billingRepo, billingdomain.PlanPro, billingdomain.PlanElite)
 	mt5AnalyticsHandler := analyticsdelivery.NewHandler(mt5AnalyticsUC, mt5InsightsUC, mt5RecomputeUC, authMW, authRateLimitMW, requirePro)
 	mt5Handler := mt5transport.NewHandler(mt5UC, authMW, cfg.MT5ImportMaxBytes, authRateLimitMW, requirePro)
 	billingHandler := billingtransport.NewHandler(billingService, authMW, cfg.AppBaseURL)

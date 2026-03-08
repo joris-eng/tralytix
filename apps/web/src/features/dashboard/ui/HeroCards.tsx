@@ -5,7 +5,6 @@ function toneToAccent(tone: HeroCardTone): string {
   switch (tone) {
     case "success": return "var(--ui-color-success)";
     case "warning": return "var(--ui-color-warning)";
-    case "danger":  return "var(--ui-color-danger)";
     case "primary": return "var(--ui-color-primary)";
     default:        return "var(--ui-color-text)";
   }
@@ -31,7 +30,6 @@ function HeroMetricCard({ metric }: HeroMetricCardProps) {
         {metric.value}
       </div>
       <div className={styles.context}>{metric.context}</div>
-      <div className={styles.cardSparkline} />
     </div>
   );
 }

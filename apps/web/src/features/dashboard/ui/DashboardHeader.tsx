@@ -1,6 +1,6 @@
 import type { DashboardMode } from "@/features/dashboard/model";
-import { Badge, Card, Heading, Text, ToggleTabs, Tooltip } from "@/features/ui/primitives";
-import styles from "@/features/dashboard/ui/dashboardV1.module.css";
+import { ToggleTabs } from "@/features/ui/primitives";
+import styles from "@/features/dashboard/ui/dashboardHeader.module.css";
 
 const MODE_OPTIONS: Array<{ value: DashboardMode; label: string }> = [
   { value: "simple", label: "Simple" },
@@ -17,28 +17,20 @@ type DashboardHeaderProps = {
 
 export function DashboardHeader({ title, subtitle, rangeLabel, mode, onModeChange }: DashboardHeaderProps) {
   return (
-    <Card elevated>
-      <div className={styles.header}>
-        <div>
-          <Heading level={1}>{title}</Heading>
-          <Text tone="muted" style={{ marginTop: 8 }}>
-            {subtitle}
-          </Text>
-          <div className={styles.headerMeta} style={{ marginTop: 12 }}>
-            <Badge variant="primary">Dashboard V1</Badge>
-            <Badge variant="neutral">{rangeLabel}</Badge>
-          </div>
-        </div>
-
-        <div style={{ display: "grid", gap: 10 }}>
-          <Tooltip content="Range picker placeholder (mock)">
-            <button type="button" className={styles.rangePicker}>
-              Range: {rangeLabel}
-            </button>
-          </Tooltip>
-          <ToggleTabs<DashboardMode> value={mode} options={MODE_OPTIONS} onChange={onModeChange} ariaLabel="Dashboard display mode" />
-        </div>
+    <div className={styles.root}>
+      <div className={styles.left}>
+        <h1 className={styles.title}>{title}</h1>
+        <p className={styles.subtitle}>{subtitle}</p>
       </div>
-    </Card>
+      <div className={styles.right}>
+        <span className={styles.rangeLabel}>{rangeLabel}</span>
+        <ToggleTabs<DashboardMode>
+          value={mode}
+          options={MODE_OPTIONS}
+          onChange={onModeChange}
+          ariaLabel="Dashboard display mode"
+        />
+      </div>
+    </div>
   );
 }

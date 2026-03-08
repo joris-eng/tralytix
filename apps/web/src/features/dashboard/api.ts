@@ -7,7 +7,7 @@ import {
 } from "@/features/dashboard/model";
 
 export async function fetchDashboardSummary(): Promise<DashboardSummary> {
-  const payload = await apiClient.analyticsSummary();
+  const payload = await apiClient.mt5AnalyticsSummary();
   return dashboardSummarySchema.parse(payload);
 }
 

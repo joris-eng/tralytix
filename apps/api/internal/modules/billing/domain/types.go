@@ -8,8 +8,9 @@ import (
 type Plan string
 
 const (
-	PlanFree Plan = "free"
-	PlanPro  Plan = "pro"
+	PlanFree  Plan = "free"
+	PlanPro   Plan = "pro"
+	PlanElite Plan = "elite"
 )
 
 type Subscription struct {
