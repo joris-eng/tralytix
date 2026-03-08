@@ -165,28 +165,35 @@ export function DashboardV1Screen() {
           const winRate = parseMetric(summary.win_rate);
           const profitFactor = parseMetric(summary.profit_factor);
           const avgProfit = parseMetric(summary.avg_profit);
+          const totalProfit = parseMetric(summary.total_profit);
           const performanceScore = computePerformanceScore(winRate, profitFactor);
           return (
-        <HeroCards
-          performanceScore={{
-            label: "Performance score",
-            value: `${performanceScore}`,
-            context: `${summary.total_trades} trades analyzed.`,
-            tone: performanceScore >= 60 ? "success" : "warning"
-          }}
-          percentile={{
-            label: "Win rate",
-            value: formatPercent(winRate),
-            context: "Derived from closed trades.",
-            tone: winRate >= 0.5 ? "primary" : "warning"
-          }}
-          consistency={{
-            label: "Profit factor",
-            value: formatDecimal(profitFactor),
-            context: `Avg PnL ${formatDecimal(avgProfit)}.`,
-            tone: profitFactor >= 1 ? "success" : "warning"
-          }}
-        />
+            <HeroCards
+              performanceScore={{
+                label: "Performance score",
+                value: `${performanceScore}`,
+                context: `${summary.total_trades} trades analyzed.`,
+                tone: performanceScore >= 60 ? "success" : performanceScore >= 40 ? "warning" : "danger"
+              }}
+              winRate={{
+                label: "Win rate",
+                value: formatPercent(winRate),
+                context: "Derived from closed trades.",
+                tone: winRate >= 0.5 ? "success" : winRate >= 0.4 ? "warning" : "danger"
+              }}
+              profitFactor={{
+                label: "Profit factor",
+                value: formatDecimal(profitFactor),
+                context: `Avg PnL ${formatDecimal(avgProfit)}.`,
+                tone: profitFactor >= 1.5 ? "success" : profitFactor >= 1.0 ? "warning" : "danger"
+              }}
+              totalProfit={{
+                label: "Total profit",
+                value: `${totalProfit >= 0 ? "+" : ""}${formatDecimal(totalProfit)}`,
+                context: `${summary.winners}W / ${summary.losers}L`,
+                tone: totalProfit >= 0 ? "success" : "danger"
+              }}
+            />
           );
         })()
       ) : null}
