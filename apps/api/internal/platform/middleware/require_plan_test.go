@@ -29,8 +29,6 @@ func (f fakePlanRepo) GetUserByStripeCustomerID(_ context.Context, _ string) (st
 	return "", nil
 }
 
-// ---- RequirePlan(PlanPro) tests ----
-
 func TestRequirePlan_FreeUser_Returns403(t *testing.T) {
 	repo := fakePlanRepo{plan: domain.PlanFree}
 	mw := RequirePlan(repo, domain.PlanPro)
@@ -104,8 +102,6 @@ func TestRequirePlan_NoAuth_Returns401(t *testing.T) {
 	}
 }
 
-// ---- Elite plan tests ----
-
 func TestRequirePlan_ProUser_BlockedFromEliteRoute(t *testing.T) {
 	repo := fakePlanRepo{plan: domain.PlanPro}
 	mw := RequirePlan(repo, domain.PlanElite)
@@ -123,7 +119,6 @@ func TestRequirePlan_ProUser_BlockedFromEliteRoute(t *testing.T) {
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rr.Code)
 	}
-
 	var payload map[string]any
 	if err := json.Unmarshal(rr.Body.Bytes(), &payload); err != nil {
 		t.Fatalf("decode response: %v", err)
@@ -162,9 +157,9 @@ func TestRequirePlan_EliteUser_PassesThroughEliteRoute(t *testing.T) {
 }
 
 func TestRequirePlan_EliteUser_PassesThroughProRoute(t *testing.T) {
-	// Elite users should access Pro-tier routes too (higher plan = broader access)
 	repo := fakePlanRepo{plan: domain.PlanElite}
-	mw := RequirePlan(repo, domain.PlanPro)
+	// Pro route allows pro AND elite
+	mw := RequirePlan(repo, domain.PlanPro, domain.PlanElite)
 
 	nextCalled := false
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

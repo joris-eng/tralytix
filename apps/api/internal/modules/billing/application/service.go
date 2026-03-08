@@ -108,7 +108,7 @@ func (s *Service) handleEvent(ctx context.Context, event stripe.Event) error {
 		}
 
 		// Determine plan from session metadata (set when creating the session).
-		// Fall back to the priceToplan map if metadata is absent.
+		// Fall back to PlanPro for backward compatibility.
 		plan := s.resolvePlanFromSession(body)
 
 		return s.repo.UpdateUserPlan(ctx, userID, plan, customerID, subscriptionID, nil)
