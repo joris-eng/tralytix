@@ -46,7 +46,14 @@ export function PlansScreen() {
       window.location.href = payload.checkout_url;
     } catch (err) {
       console.error("[plans] checkout error:", err);
-      setError(err instanceof Error ? err.message : "Unable to start checkout. Please try again.");
+      const isAbort =
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError");
+      if (isAbort) {
+        setError("La connexion a pris trop de temps. Réessaie dans quelques secondes.");
+      } else {
+        setError(err instanceof Error ? err.message : "Impossible de démarrer le paiement. Réessaie.");
+      }
     } finally {
       setLoadingTier(null);
     }

@@ -47,7 +47,8 @@ export const apiClient = {
     httpRequest<unknown>(privateClient, "GET", "/integrations/mt5/analytics/equity"),
   billingCheckout: (priceId: string) =>
     httpRequest<{ checkout_url: string }>(privateClient, "POST", "/billing/checkout", {
-      body: { price_id: priceId }
+      body: { price_id: priceId },
+      timeoutMs: 30_000 // Stripe session creation can take several seconds on cold start
     }),
   billingPlan: () => httpRequest<{ plan: "free" | "pro" }>(privateClient, "GET", "/billing/plan"),
   mt5AnalyticsRecomputeDaily: () =>
