@@ -1,0 +1,247 @@
+.page {
+  display: grid;
+  gap: var(--ui-space-5);
+  max-width: 900px;
+}
+
+/* ── Page header ─────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ui-space-4);
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.title {
+  font-family: var(--ui-font-family);
+  font-weight: 800;
+  font-size: 1.75rem;
+  color: var(--ui-color-text);
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+}
+
+/* ── Status card ─────────────────────────────────────────── */
+.statusCard {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-5);
+}
+
+.statusHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-4);
+}
+
+.statusLabel {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--ui-radius-pill);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  font-weight: 500;
+}
+
+.statusBadge[data-status="ok"] {
+  background: rgba(0, 229, 160, 0.12);
+  color: var(--ui-color-success);
+  border: 1px solid rgba(0, 229, 160, 0.25);
+}
+
+.statusBadge[data-status="idle"] {
+  background: rgba(255, 181, 71, 0.12);
+  color: var(--ui-color-warning);
+  border: 1px solid rgba(255, 181, 71, 0.25);
+}
+
+.statusBadge[data-status="error"] {
+  background: rgba(255, 77, 109, 0.12);
+  color: var(--ui-color-danger);
+  border: 1px solid rgba(255, 77, 109, 0.25);
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ui-space-4);
+  padding-top: var(--ui-space-4);
+  border-top: 1px solid var(--ui-color-divider);
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.metricLabel {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ui-color-text-subtle);
+}
+
+.metricValue {
+  font-family: var(--ui-font-mono);
+  font-size: 1.6rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ui-color-text);
+  line-height: 1;
+}
+
+.metricValue[data-accent="primary"] { color: var(--ui-color-primary); }
+
+.metricSub {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-subtle);
+  margin-top: 2px;
+}
+
+.accountId {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-muted);
+  background: var(--ui-color-surface-elevated);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: 6px 10px;
+  word-break: break-all;
+  margin-top: var(--ui-space-4);
+}
+
+.accountIdLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ui-color-text-subtle);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ── Import card ─────────────────────────────────────────── */
+.importCard {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-5);
+}
+
+.importTitle {
+  font-family: var(--ui-font-family);
+  font-weight: 600;
+  font-size: var(--ui-font-size-md);
+  color: var(--ui-color-text);
+  margin-bottom: var(--ui-space-1);
+}
+
+.importSubtitle {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-muted);
+  margin-bottom: var(--ui-space-4);
+}
+
+.importDropzone {
+  border: 1px dashed var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ui-space-2);
+  cursor: pointer;
+  transition: border-color 200ms ease, background 200ms ease;
+  margin-bottom: var(--ui-space-4);
+}
+
+.importDropzone:hover {
+  border-color: var(--ui-color-primary);
+  background: rgba(0, 212, 255, 0.03);
+}
+
+.dropzoneIcon {
+  font-size: 1.5rem;
+  opacity: 0.5;
+}
+
+.dropzoneLabel {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+}
+
+.dropzoneHint {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-subtle);
+}
+
+.fileSelected {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-primary);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.importActions {
+  display: flex;
+  gap: var(--ui-space-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.importResult {
+  margin-top: var(--ui-space-4);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  background: rgba(0, 229, 160, 0.06);
+  border: 1px solid rgba(0, 229, 160, 0.2);
+  border-radius: var(--ui-radius-sm);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-success);
+}
+
+@media (max-width: 700px) {
+  .metricsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
