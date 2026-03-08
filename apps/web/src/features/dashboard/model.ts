@@ -43,8 +43,9 @@ export type DashboardViewModel = {
   rangeLabel: string;
   hero: {
     performanceScore: HeroMetric;
-    percentile: HeroMetric;
-    consistency: HeroMetric;
+    winRate: HeroMetric;
+    profitFactor: HeroMetric;
+    totalProfit: HeroMetric;
   };
   insights: InsightModel[];
   breakdown: BreakdownModel[];
