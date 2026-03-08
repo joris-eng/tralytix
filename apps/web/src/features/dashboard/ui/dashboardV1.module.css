@@ -30,7 +30,7 @@
 .heroGrid {
   display: grid;
   gap: var(--ui-space-3);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .insightsGrid {
@@ -56,29 +56,86 @@
   margin-top: var(--ui-space-2);
 }
 
+/* Breakdown score: large mono numeric */
+.breakdownScore {
+  font-family: var(--ui-font-mono);
+  font-size: 2.4rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--ui-color-text);
+  margin-top: var(--ui-space-2);
+  margin-bottom: var(--ui-space-1);
+}
+
+/* Trend indicator: dot + label */
+.trendIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trendDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.trendDot[data-trend="up"]   { background: var(--ui-color-success); }
+.trendDot[data-trend="down"] { background: var(--ui-color-danger); }
+.trendDot[data-trend="flat"] { background: var(--ui-color-warning); }
+
+.trendText {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-muted);
+}
+
+/* Compact insight card (replaces Card primitive for tighter layout) */
+.insightCard {
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  display: flex;
+  flex-direction: column;
+}
+
+.insightHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.severityDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .insightFooter {
-  margin-top: var(--ui-space-4);
+  margin-top: var(--ui-space-3);
   display: flex;
   justify-content: flex-end;
 }
 
 .sparkline {
   margin-top: var(--ui-space-3);
-  height: 44px;
+  height: 80px;
   border-radius: var(--ui-radius-sm);
   border: 1px solid var(--ui-color-border);
-  background: #0d1522;
+  background: rgba(255, 255, 255, 0.02);
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 5px;
   padding: 8px;
 }
 
 .sparklineBar {
   flex: 1;
   border-radius: 2px;
-  background: #30415d;
-  min-height: 6px;
+  min-height: 4px;
 }
 
 .tableWrap {
@@ -105,6 +162,34 @@
   color: var(--ui-color-text-muted);
   font-weight: 500;
   background: #0e1623;
+}
+
+/* Subtle alternating row background */
+.tableRowOdd {
+  background: rgba(255, 255, 255, 0.016);
+}
+
+/* Colored status pills */
+.statusPill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--ui-radius-pill);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.statusPill[data-status="open"] {
+  background: rgba(255, 77, 109, 0.15);
+  color: #ff4d6d;
+  border: 1px solid rgba(255, 77, 109, 0.3);
+}
+
+.statusPill[data-status="watch"] {
+  background: rgba(255, 181, 71, 0.15);
+  color: #ffb547;
+  border: 1px solid rgba(255, 181, 71, 0.3);
 }
 
 .topLeaksFooter {
@@ -144,8 +229,17 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .heroGrid,
+  .heroGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .insightsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .heroGrid {
     grid-template-columns: 1fr;
   }
 }

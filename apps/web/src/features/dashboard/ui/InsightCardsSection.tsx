@@ -1,24 +1,34 @@
 import type { InsightModel } from "@/features/dashboard/model";
-import { Button, Card, Divider, Heading, Text } from "@/features/ui/primitives";
+import { Button, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
+
+function severityDotColor(severity?: string): string {
+  if (!severity) return "var(--ui-color-text-subtle)";
+  const lower = severity.toLowerCase();
+  if (lower.includes("high")) return "var(--ui-color-danger)";
+  if (lower.includes("med")) return "var(--ui-color-warning)";
+  return "var(--ui-color-success)";
+}
 
 type InsightCardProps = {
   item: InsightModel;
 };
 
 function InsightCard({ item }: InsightCardProps) {
+  const dotColor = severityDotColor(item.severity);
   return (
-    <Card>
-      <Heading level={3}>{item.title}</Heading>
+    <div className={styles.insightCard}>
+      <div className={styles.insightHeader}>
+        <span className={styles.severityDot} style={{ background: dotColor }} />
+        <Heading level={3} style={{ margin: 0 }}>{item.title}</Heading>
+      </div>
       <Text tone="muted" size="sm" style={{ marginTop: 8 }}>
         {item.interpretation}
       </Text>
-      <Divider style={{ margin: "12px 0" }} />
-      <Text size="sm">{item.recommendation}</Text>
       <div className={styles.insightFooter}>
         <Button variant="primary">{item.ctaLabel}</Button>
       </div>
-    </Card>
+    </div>
   );
 }
 

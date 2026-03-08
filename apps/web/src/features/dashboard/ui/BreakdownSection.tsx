@@ -1,17 +1,7 @@
 import type { BreakdownModel } from "@/features/dashboard/model";
-import { Badge, Card, Heading, Text } from "@/features/ui/primitives";
+import { Card, Heading, Text } from "@/features/ui/primitives";
 import { SparklinePlaceholder } from "@/features/dashboard/ui/SparklinePlaceholder";
 import styles from "@/features/dashboard/ui/dashboardV1.module.css";
-
-function mapTrendToBadgeVariant(direction: BreakdownModel["trendDirection"]): "neutral" | "primary" | "warning" | "success" {
-  if (direction === "up") {
-    return "success";
-  }
-  if (direction === "down") {
-    return "warning";
-  }
-  return "neutral";
-}
 
 function mapTrendLabel(direction: BreakdownModel["trendDirection"]): string {
   if (direction === "up") return "Uptrend";
@@ -28,11 +18,12 @@ function BreakdownCard({ item }: BreakdownCardProps) {
     <Card>
       <div className={styles.cardHeader}>
         <Heading level={3}>{item.label}</Heading>
-        <Badge variant={mapTrendToBadgeVariant(item.trendDirection)}>{mapTrendLabel(item.trendDirection)}</Badge>
+        <div className={styles.trendIndicator}>
+          <span className={styles.trendDot} data-trend={item.trendDirection} />
+          <span className={styles.trendText}>{mapTrendLabel(item.trendDirection)}</span>
+        </div>
       </div>
-      <Heading level={2} className={styles.metricValue}>
-        {item.score}
-      </Heading>
+      <div className={styles.breakdownScore}>{item.score}</div>
       <Text tone="muted" size="sm">
         {item.detail}
       </Text>
