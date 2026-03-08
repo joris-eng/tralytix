@@ -1,17 +1,69 @@
 .page {
   display: grid;
   gap: var(--ui-space-5);
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .header {
   display: grid;
   gap: var(--ui-space-2);
+  text-align: center;
 }
 
+/* Billing period toggle */
+.billingToggle {
+  display: flex;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  margin-bottom: var(--ui-space-2);
+}
+
+.toggleActive {
+  padding: var(--ui-space-2) var(--ui-space-4);
+  background: var(--ui-color-surface-elevated);
+  border: 1px solid var(--ui-color-primary);
+  color: var(--ui-color-primary);
+  border-radius: var(--ui-radius-pill);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.toggleInactive {
+  padding: var(--ui-space-2) var(--ui-space-4);
+  background: transparent;
+  border: 1px solid var(--ui-color-border);
+  color: var(--ui-color-text-muted);
+  border-radius: var(--ui-radius-pill);
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.toggleInactive:hover {
+  border-color: var(--ui-color-text-muted);
+  color: var(--ui-color-text);
+}
+
+.savingsBadge {
+  display: inline-block;
+  margin-left: var(--ui-space-1);
+  padding: 1px 6px;
+  background: rgba(0, 229, 160, 0.15);
+  color: var(--ui-color-success);
+  border-radius: var(--ui-radius-sm);
+  font-size: 0.7em;
+  vertical-align: middle;
+}
+
+/* 3-column grid on desktop */
 .comparisonGrid {
   display: grid;
   gap: var(--ui-space-4);
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .pricingCard {
@@ -26,14 +78,57 @@
   right: var(--ui-space-4);
 }
 
+.currentBadge {
+  position: absolute;
+  top: var(--ui-space-4);
+  left: var(--ui-space-4);
+}
+
+.trialBadge {
+  position: absolute;
+  top: calc(var(--ui-space-4) + 28px);
+  right: var(--ui-space-4);
+}
+
 .priceRow {
   display: flex;
-  gap: var(--ui-space-2);
-  align-items: baseline;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .ctaRow {
   margin-top: var(--ui-space-2);
+}
+
+/* Coming soon section */
+.comingSoonSection {
+  padding-top: var(--ui-space-2);
+  border-top: 1px solid var(--ui-color-divider);
+}
+
+.comingSoonList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.comingSoonItem {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-subtle);
+  font-family: var(--ui-font-mono);
+}
+
+.comingSoonDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ui-color-text-subtle);
+  flex-shrink: 0;
 }
 
 .faqList {
@@ -46,7 +141,13 @@
   gap: var(--ui-space-1);
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
+  .comparisonGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
   .comparisonGrid {
     grid-template-columns: 1fr;
   }

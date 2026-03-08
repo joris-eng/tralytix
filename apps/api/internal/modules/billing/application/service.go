@@ -18,25 +18,40 @@ type Service struct {
 	repo            ports.SubscriptionRepository
 	stripeSecretKey string
 	webhookSecret   string
-	priceMonthly    string
-	priceYearly     string
+	// priceID → Plan mapping (built from the 4 configured price IDs)
+	priceToplan map[string]domain.Plan
 }
 
 func NewService(
 	repo ports.SubscriptionRepository,
-	stripeSecretKey, webhookSecret, priceMonthly, priceYearly string,
+	stripeSecretKey, webhookSecret string,
+	priceProMonthly, priceProYearly string,
+	priceEliteMonthly, priceEliteYearly string,
 ) *Service {
+	priceToplan := map[string]domain.Plan{}
+	if priceProMonthly != "" {
+		priceToplan[priceProMonthly] = domain.PlanPro
+	}
+	if priceProYearly != "" {
+		priceToplan[priceProYearly] = domain.PlanPro
+	}
+	if priceEliteMonthly != "" {
+		priceToplan[priceEliteMonthly] = domain.PlanElite
+	}
+	if priceEliteYearly != "" {
+		priceToplan[priceEliteYearly] = domain.PlanElite
+	}
 	return &Service{
 		repo:            repo,
 		stripeSecretKey: stripeSecretKey,
 		webhookSecret:   webhookSecret,
-		priceMonthly:    priceMonthly,
-		priceYearly:     priceYearly,
+		priceToplan:     priceToplan,
 	}
 }
 
 func (s *Service) CreateCheckoutSession(ctx context.Context, userID, priceID, successURL, cancelURL string) (string, error) {
-	if !s.IsAllowedPriceID(priceID) {
+	plan, ok := s.priceToplan[priceID]
+	if !ok {
 		return "", domain.ErrInvalidPlan
 	}
 
@@ -54,6 +69,9 @@ func (s *Service) CreateCheckoutSession(ctx context.Context, userID, priceID, su
 			},
 		},
 	}
+	// Embed the target plan in session metadata so the webhook can read it
+	// without needing to expand line_items.
+	params.AddMetadata("plan", string(plan))
 	params.Context = ctx
 
 	sess, err := checkoutsession.New(params)
@@ -88,7 +106,12 @@ func (s *Service) handleEvent(ctx context.Context, event stripe.Event) error {
 		if strings.TrimSpace(userID) == "" {
 			return nil
 		}
-		return s.repo.UpdateUserPlan(ctx, userID, domain.PlanPro, customerID, subscriptionID, nil)
+
+		// Determine plan from session metadata (set when creating the session).
+		// Fall back to the priceToplan map if metadata is absent.
+		plan := s.resolvePlanFromSession(body)
+
+		return s.repo.UpdateUserPlan(ctx, userID, plan, customerID, subscriptionID, nil)
 
 	case "customer.subscription.deleted":
 		var body map[string]any
@@ -114,20 +137,27 @@ func (s *Service) handleEvent(ctx context.Context, event stripe.Event) error {
 	}
 }
 
+// resolvePlanFromSession reads "metadata.plan" from the checkout session body.
+// If absent or invalid, it falls back to PlanPro for backward compatibility.
+func (s *Service) resolvePlanFromSession(body map[string]any) domain.Plan {
+	if meta, ok := body["metadata"].(map[string]any); ok {
+		if planStr, ok := meta["plan"].(string); ok {
+			switch domain.Plan(planStr) {
+			case domain.PlanPro, domain.PlanElite:
+				return domain.Plan(planStr)
+			}
+		}
+	}
+	return domain.PlanPro
+}
+
 func (s *Service) GetUserPlan(ctx context.Context, userID string) (domain.Plan, error) {
 	return s.repo.GetUserPlan(ctx, userID)
 }
 
 func (s *Service) IsAllowedPriceID(priceID string) bool {
-	return priceID == s.priceMonthly || priceID == s.priceYearly
-}
-
-func (s *Service) PriceMonthly() string {
-	return s.priceMonthly
-}
-
-func (s *Service) PriceYearly() string {
-	return s.priceYearly
+	_, ok := s.priceToplan[priceID]
+	return ok
 }
 
 func getString(values map[string]any, key string) string {

@@ -29,6 +29,8 @@ func (f fakePlanRepo) GetUserByStripeCustomerID(_ context.Context, _ string) (st
 	return "", nil
 }
 
+// ---- RequirePlan(PlanPro) tests ----
+
 func TestRequirePlan_FreeUser_Returns403(t *testing.T) {
 	repo := fakePlanRepo{plan: domain.PlanFree}
 	mw := RequirePlan(repo, domain.PlanPro)
@@ -99,5 +101,87 @@ func TestRequirePlan_NoAuth_Returns401(t *testing.T) {
 
 	if rr.Code != http.StatusUnauthorized {
 		t.Fatalf("expected status %d, got %d", http.StatusUnauthorized, rr.Code)
+	}
+}
+
+// ---- Elite plan tests ----
+
+func TestRequirePlan_ProUser_BlockedFromEliteRoute(t *testing.T) {
+	repo := fakePlanRepo{plan: domain.PlanPro}
+	mw := RequirePlan(repo, domain.PlanElite)
+
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/elite", nil)
+	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
+	rr := httptest.NewRecorder()
+
+	mw(next).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("expected status %d, got %d", http.StatusForbidden, rr.Code)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(rr.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	errBody, ok := payload["error"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected nested error object in response")
+	}
+	if errBody["code"] != "elite_required" {
+		t.Fatalf("expected code=elite_required, got %v", errBody["code"])
+	}
+}
+
+func TestRequirePlan_EliteUser_PassesThroughEliteRoute(t *testing.T) {
+	repo := fakePlanRepo{plan: domain.PlanElite}
+	mw := RequirePlan(repo, domain.PlanElite)
+
+	nextCalled := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/elite", nil)
+	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
+	rr := httptest.NewRecorder()
+
+	mw(next).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if !nextCalled {
+		t.Fatalf("expected next handler to be called")
+	}
+}
+
+func TestRequirePlan_EliteUser_PassesThroughProRoute(t *testing.T) {
+	// Elite users should access Pro-tier routes too (higher plan = broader access)
+	repo := fakePlanRepo{plan: domain.PlanElite}
+	mw := RequirePlan(repo, domain.PlanPro)
+
+	nextCalled := false
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		nextCalled = true
+		w.WriteHeader(http.StatusOK)
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/pro", nil)
+	req = req.WithContext(authctx.WithAuthUserID(req.Context(), "user-1"))
+	rr := httptest.NewRecorder()
+
+	mw(next).ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+	if !nextCalled {
+		t.Fatalf("expected next handler to be called")
 	}
 }

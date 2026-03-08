@@ -51,12 +51,17 @@ export function useAuthConfig(): AuthConfigState {
   return { devLoginEnabled, loading: loadingAuthConfig };
 }
 
-export function usePlan(): "free" | "pro" {
+export function usePlan(): "free" | "pro" | "elite" {
   const { userPlan } = useAuthSessionContext();
   return userPlan;
 }
 
 export function useIsPro(): boolean {
   const { userPlan } = useAuthSessionContext();
-  return userPlan === "pro";
+  return userPlan === "pro" || userPlan === "elite";
+}
+
+export function useIsElite(): boolean {
+  const { userPlan } = useAuthSessionContext();
+  return userPlan === "elite";
 }

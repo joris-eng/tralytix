@@ -9,7 +9,18 @@ import (
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
 )
 
-func RequirePlan(repo billingports.SubscriptionRepository, plan domain.Plan) func(http.Handler) http.Handler {
+// RequirePlan returns middleware that allows access when the authenticated user
+// holds any of the provided plans. Plan hierarchy: free(0) < pro(1) < elite(2).
+// A user with a higher plan level is always granted access to lower-tier routes.
+func RequirePlan(repo billingports.SubscriptionRepository, allowedPlans ...domain.Plan) func(http.Handler) http.Handler {
+	// Compute the minimum required level from the allowed list.
+	minLevel := planLevel(domain.PlanElite) // start high
+	for _, p := range allowedPlans {
+		if l := planLevel(p); l < minLevel {
+			minLevel = l
+		}
+	}
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			userID, ok := authctx.AuthUserID(r.Context())
@@ -24,8 +35,8 @@ func RequirePlan(repo billingports.SubscriptionRepository, plan domain.Plan) fun
 				return
 			}
 
-			if planLevel(userPlan) < planLevel(plan) {
-				writeProRequired(w)
+			if planLevel(userPlan) < minLevel {
+				writePlanRequired(w, minLevel)
 				return
 			}
 
@@ -35,12 +46,20 @@ func RequirePlan(repo billingports.SubscriptionRepository, plan domain.Plan) fun
 }
 
 func planLevel(p domain.Plan) int {
-	if p == domain.PlanPro {
+	switch p {
+	case domain.PlanElite:
+		return 2
+	case domain.PlanPro:
 		return 1
+	default:
+		return 0
 	}
-	return 0
 }
 
-func writeProRequired(w http.ResponseWriter) {
+func writePlanRequired(w http.ResponseWriter, minLevel int) {
+	if minLevel >= planLevel(domain.PlanElite) {
+		platformerrors.WriteError(w, nil, http.StatusForbidden, "elite_required", "Upgrade to Elite to access this feature", nil)
+		return
+	}
 	platformerrors.WriteError(w, nil, http.StatusForbidden, "pro_required", "Upgrade to Pro to access this feature", nil)
 }
