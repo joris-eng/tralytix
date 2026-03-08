@@ -158,7 +158,7 @@ LIMIT $2 OFFSET $3`
 		); err != nil {
 			return nil, fmt.Errorf("query trades: %w", err)
 		}
-		trade.ID = tradeID.String()
+		trade.ID = fmt.Sprintf("%d", tradeID)
 		trade.AccountID = tradeAccountID.String()
 		trades = append(trades, trade)
 	}
