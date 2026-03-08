@@ -1,31 +1,27 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMt5Status } from "@/features/mt5/hooks";
-import { ApiError } from "@/shared/ui/ApiError";
-import { JsonBlock } from "@/shared/ui/JsonBlock";
 import { AuthGate } from "@/shared/auth/AuthGate";
 import { useRequireAuth } from "@/shared/auth/useSessionState";
+import { Mt5StatusCard } from "@/features/mt5/ui/Mt5StatusCard";
+import { Mt5ImportCard } from "@/features/mt5/ui/Mt5ImportCard";
+import styles from "@/features/mt5/ui/mt5.module.css";
 
-function Mt5StatusContent() {
-  const { data, error, loading, refresh } = useMt5Status();
-
+function Mt5PageContent() {
   return (
-    <section className="card">
-      <h1>MT5 Status</h1>
-      <p className="muted">Auto login dev + fetch status from backend `/v1`.</p>
-      <div className="row" style={{ marginBottom: 12 }}>
-        <button className="primary" onClick={() => void refresh()} disabled={loading}>
-          {loading ? "Loading..." : "Refresh"}
-        </button>
-        <Link href="/">Back Home</Link>
-      </div>
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerLeft}>
+          <h1 className={styles.title}>MT5 Connection</h1>
+          <span className={styles.subtitle}>
+            Statut du compte et import de l'historique de trading.
+          </span>
+        </div>
+      </header>
 
-      {loading ? <p className="muted">Loading status...</p> : null}
-      {error ? <ApiError message={error} /> : null}
-      {!loading && !error && data ? <JsonBlock value={data} /> : null}
-    </section>
+      <Mt5StatusCard />
+      <Mt5ImportCard />
+    </div>
   );
 }
 
@@ -35,8 +31,7 @@ export default function Mt5StatusPage() {
 
   return (
     <AuthGate checkingSession={checkingSession} isAuthenticated={isAuthenticated}>
-      <Mt5StatusContent />
+      <Mt5PageContent />
     </AuthGate>
   );
 }
-
