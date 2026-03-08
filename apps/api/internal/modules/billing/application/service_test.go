@@ -10,6 +10,29 @@ import (
 	"github.com/stripe/stripe-go/v76"
 )
 
+// ---- helpers ----------------------------------------------------------------
+
+const (
+	testProMonthly   = "price_pro_monthly"
+	testProYearly    = "price_pro_yearly"
+	testEliteMonthly = "price_elite_monthly"
+	testEliteYearly  = "price_elite_yearly"
+)
+
+func newTestService(repo *fakeRepo) *Service {
+	return NewService(
+		repo,
+		"sk_test_x",
+		"whsec_test",
+		testProMonthly,
+		testProYearly,
+		testEliteMonthly,
+		testEliteYearly,
+	)
+}
+
+// ---- fake repo --------------------------------------------------------------
+
 type fakeRepo struct {
 	planResult                 domain.Plan
 	userIDByStripeCustomerID   string
@@ -55,9 +78,11 @@ func (f *fakeRepo) GetUserByStripeCustomerID(_ context.Context, _ string) (strin
 	return f.userIDByStripeCustomerID, nil
 }
 
+// ---- tests ------------------------------------------------------------------
+
 func TestGetUserPlan_ReturnsFree(t *testing.T) {
 	repo := &fakeRepo{planResult: domain.PlanFree}
-	svc := NewService(repo, "sk_test_x", "whsec_test", "price_monthly", "price_yearly")
+	svc := newTestService(repo)
 
 	plan, err := svc.GetUserPlan(context.Background(), "user-1")
 	if err != nil {
@@ -70,7 +95,7 @@ func TestGetUserPlan_ReturnsFree(t *testing.T) {
 
 func TestGetUserPlan_ReturnsPro(t *testing.T) {
 	repo := &fakeRepo{planResult: domain.PlanPro}
-	svc := NewService(repo, "sk_test_x", "whsec_test", "price_monthly", "price_yearly")
+	svc := newTestService(repo)
 
 	plan, err := svc.GetUserPlan(context.Background(), "user-1")
 	if err != nil {
@@ -83,7 +108,7 @@ func TestGetUserPlan_ReturnsPro(t *testing.T) {
 
 func TestCreateCheckoutSession_InvalidPriceID(t *testing.T) {
 	repo := &fakeRepo{}
-	svc := NewService(repo, "sk_test_x", "whsec_test", "price_monthly", "price_yearly")
+	svc := newTestService(repo)
 
 	_, err := svc.CreateCheckoutSession(
 		context.Background(),
@@ -100,9 +125,33 @@ func TestCreateCheckoutSession_InvalidPriceID(t *testing.T) {
 	}
 }
 
+func TestIsAllowedPriceID(t *testing.T) {
+	repo := &fakeRepo{}
+	svc := newTestService(repo)
+
+	cases := []struct {
+		priceID string
+		allowed bool
+	}{
+		{testProMonthly, true},
+		{testProYearly, true},
+		{testEliteMonthly, true},
+		{testEliteYearly, true},
+		{"price_unknown", false},
+		{"", false},
+	}
+
+	for _, tc := range cases {
+		got := svc.IsAllowedPriceID(tc.priceID)
+		if got != tc.allowed {
+			t.Errorf("IsAllowedPriceID(%q) = %v, want %v", tc.priceID, got, tc.allowed)
+		}
+	}
+}
+
 func TestHandleWebhook_InvalidSignature(t *testing.T) {
 	repo := &fakeRepo{}
-	svc := NewService(repo, "sk_test_x", "whsec_test", "price_monthly", "price_yearly")
+	svc := newTestService(repo)
 
 	err := svc.HandleWebhook(context.Background(), []byte("garbage"), "bad_signature")
 	if !errors.Is(err, domain.ErrWebhookInvalid) {
@@ -112,15 +161,17 @@ func TestHandleWebhook_InvalidSignature(t *testing.T) {
 
 func TestHandleWebhook_CheckoutCompleted_UpgradesToPro(t *testing.T) {
 	repo := &fakeRepo{}
-	svc := NewService(repo, "sk_test_x", "whsec_test", "price_monthly", "price_yearly")
+	svc := newTestService(repo)
 
+	// Session with metadata.plan = "pro"
 	event := stripe.Event{
 		Type: "checkout.session.completed",
 		Data: &stripe.EventData{
 			Raw: []byte(`{
 				"client_reference_id": "user-123",
 				"customer": "cus_123",
-				"subscription": "sub_123"
+				"subscription": "sub_123",
+				"metadata": {"plan": "pro"}
 			}`),
 		},
 	}
@@ -146,11 +197,65 @@ func TestHandleWebhook_CheckoutCompleted_UpgradesToPro(t *testing.T) {
 	}
 }
 
+func TestHandleWebhook_CheckoutCompleted_UpgradesToElite(t *testing.T) {
+	repo := &fakeRepo{}
+	svc := newTestService(repo)
+
+	// Session with metadata.plan = "elite"
+	event := stripe.Event{
+		Type: "checkout.session.completed",
+		Data: &stripe.EventData{
+			Raw: []byte(`{
+				"client_reference_id": "user-456",
+				"customer": "cus_456",
+				"subscription": "sub_456",
+				"metadata": {"plan": "elite"}
+			}`),
+		},
+	}
+
+	err := svc.handleEvent(context.Background(), event)
+	if err != nil {
+		t.Fatalf("handleEvent() unexpected error: %v", err)
+	}
+	if !repo.updateCalled {
+		t.Fatalf("expected UpdateUserPlan to be called")
+	}
+	if repo.updatePlan != domain.PlanElite {
+		t.Fatalf("update plan = %q, want %q", repo.updatePlan, domain.PlanElite)
+	}
+}
+
+func TestHandleWebhook_CheckoutCompleted_NoMetadataFallsToPro(t *testing.T) {
+	repo := &fakeRepo{}
+	svc := newTestService(repo)
+
+	// Session without metadata → fallback to PlanPro
+	event := stripe.Event{
+		Type: "checkout.session.completed",
+		Data: &stripe.EventData{
+			Raw: []byte(`{
+				"client_reference_id": "user-789",
+				"customer": "cus_789",
+				"subscription": "sub_789"
+			}`),
+		},
+	}
+
+	err := svc.handleEvent(context.Background(), event)
+	if err != nil {
+		t.Fatalf("handleEvent() unexpected error: %v", err)
+	}
+	if repo.updatePlan != domain.PlanPro {
+		t.Fatalf("update plan = %q, want %q (fallback)", repo.updatePlan, domain.PlanPro)
+	}
+}
+
 func TestHandleWebhook_SubscriptionDeleted_DowngradesToFree(t *testing.T) {
 	repo := &fakeRepo{
 		userIDByStripeCustomerID: "user-xyz",
 	}
-	svc := NewService(repo, "sk_test_x", "whsec_test", "price_monthly", "price_yearly")
+	svc := newTestService(repo)
 
 	event := stripe.Event{
 		Type: "customer.subscription.deleted",

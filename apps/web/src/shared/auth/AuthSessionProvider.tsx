@@ -14,7 +14,7 @@ type AuthSessionContextValue = {
   isAuthenticated: boolean;
   loadingAuthConfig: boolean;
   devLoginEnabled: boolean;
-  userPlan: "free" | "pro";
+  userPlan: "free" | "pro" | "elite";
   refreshSession: () => Promise<void>;
 };
 
@@ -25,7 +25,7 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loadingAuthConfig, setLoadingAuthConfig] = useState(true);
   const [devLoginEnabled, setDevLoginEnabled] = useState(true);
-  const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
+  const [userPlan, setUserPlan] = useState<"free" | "pro" | "elite">("free");
 
   const refreshSession = useCallback(async () => {
     const token = getToken();
@@ -38,7 +38,9 @@ export function AuthSessionProvider({ children }: { children: ReactNode }) {
 
     try {
       const me = await fetchAuthMe(token);
-      setUserPlan(me.plan === "pro" ? "pro" : "free");
+      if (me.plan === "elite") setUserPlan("elite");
+      else if (me.plan === "pro") setUserPlan("pro");
+      else setUserPlan("free");
       setIsAuthenticated(true);
     } catch {
       clearToken();

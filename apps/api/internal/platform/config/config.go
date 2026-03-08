@@ -12,11 +12,13 @@ type Config struct {
 	Commit            string
 	BuiltAt           string
 	EnableDevLogin    bool
-	StripeSecretKey   string
-	StripeWebhookSecret string
-	StripePriceMonthly  string
-	StripePriceYearly   string
-	AppBaseURL          string
+	StripeSecretKey         string
+	StripeWebhookSecret     string
+	StripePriceProMonthly   string // STRIPE_PRICE_ID_PRO_MONTHLY
+	StripePriceProYearly    string // STRIPE_PRICE_ID_PRO_YEARLY
+	StripePriceEliteMonthly string // STRIPE_PRICE_ID_ELITE_MONTHLY
+	StripePriceEliteYearly  string // STRIPE_PRICE_ID_ELITE_YEARLY
+	AppBaseURL              string
 	Port              string
 	DBDSN             string
 	MT5ImportMaxBytes int64
@@ -32,11 +34,13 @@ func Load() (Config, error) {
 		Commit:            getenv("APP_COMMIT", "dev"),
 		BuiltAt:           getenv("APP_BUILT_AT", "unknown"),
 		EnableDevLogin:    getenvBool("ENABLE_DEV_LOGIN", false),
-		StripeSecretKey:   os.Getenv("STRIPE_SECRET_KEY"),
-		StripeWebhookSecret: os.Getenv("STRIPE_WEBHOOK_SECRET"),
-		StripePriceMonthly:  os.Getenv("STRIPE_PRICE_ID_MONTHLY"),
-		StripePriceYearly:   os.Getenv("STRIPE_PRICE_ID_YEARLY"),
-		AppBaseURL:          getenv("APP_BASE_URL", "http://localhost:3000"),
+		StripeSecretKey:         os.Getenv("STRIPE_SECRET_KEY"),
+		StripeWebhookSecret:     os.Getenv("STRIPE_WEBHOOK_SECRET"),
+		StripePriceProMonthly:   os.Getenv("STRIPE_PRICE_ID_PRO_MONTHLY"),
+		StripePriceProYearly:    os.Getenv("STRIPE_PRICE_ID_PRO_YEARLY"),
+		StripePriceEliteMonthly: os.Getenv("STRIPE_PRICE_ID_ELITE_MONTHLY"),
+		StripePriceEliteYearly:  os.Getenv("STRIPE_PRICE_ID_ELITE_YEARLY"),
+		AppBaseURL:              getenv("APP_BASE_URL", "http://localhost:3000"),
 		Port:              getenv("PORT", "8080"),
 		DBDSN:             os.Getenv("DB_DSN"),
 		MT5ImportMaxBytes: getenvInt64("MT5_IMPORT_MAX_BYTES", 10*1024*1024),

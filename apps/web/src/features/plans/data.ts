@@ -2,71 +2,79 @@ import type { FaqItem, PlanModel } from "@/features/plans/model";
 
 export const plans: PlanModel[] = [
   {
-    tier: "discovery",
-    name: "Decouverte",
-    audience: "Pour debuter avec des signaux clairs et un cadre simple.",
-    priceLabel: "Gratuit",
+    tier: "free",
+    name: "Découverte",
+    audience: "Pour débuter avec des signaux clairs et un cadre simple.",
+    price: null,
+    priceSub: null,
     bullets: [
-      "Dashboard simple avec KPIs essentiels",
-      "Insights prioritaires et recommandations de base",
-      "Suivi des performances hebdomadaires",
-      "Export CSV standard"
+      "Dashboard KPIs basiques",
+      "1 import MT5 CSV",
+      "Insights de base",
+      "Accès limité aux analyses"
     ],
-    ctaLabel: "Start Discovery",
-    ctaHref: "#start-discovery"
+    ctaLabel: "Plan actuel"
   },
   {
     tier: "pro",
-    name: "Pro — Mensuel",
-    audience: "Pour traders avances qui veulent un drilldown complet.",
-    priceLabel: "24,99 €",
-    priceSub: "/ mois",
+    name: "Pro",
+    audience: "Pour traders avancés qui veulent un drilldown complet.",
+    price: { monthly: "24,99 €", yearly: "239,99 €" },
+    priceSub: { monthly: "/ mois", yearly: "/ an  ·  ~20 €/mois" },
+    monthlyPriceId: "price_1T8ceVAufOS3IvBw2gPL3TYj",
+    yearlyPriceId:  "price_1T8cgPAufOS3IvBw7nsJYPAw",
+    trialDays: 10,
     bullets: [
-      "Pro Analysis avec filtres avances multi-segments",
+      "Pro Analysis avec filtres avancés multi-segments",
       "Diagnostics de leaks et analyse trade-level",
-      "Alertes patterns prioritisees",
-      "Workflows d'optimisation et comparatifs de regimes"
+      "Equity curve complète",
+      "Imports MT5 illimités",
+      "Export CSV"
     ],
-    ctaLabel: "Go Pro Mensuel",
-    ctaHref: "#go-pro",
+    ctaLabel: "Go Pro",
     highlighted: true
   },
   {
-    tier: "pro-yearly",
-    name: "Pro — Annuel",
-    audience: "Meme acces complet, avec 2 mois offerts.",
-    priceLabel: "239,99 €",
-    priceSub: "/ an  · ~20 €/mois",
+    tier: "elite",
+    name: "Elite",
+    audience: "Pour les traders qui veulent le niveau professionnel complet.",
+    price: { monthly: "49,99 €", yearly: "479,99 €" },
+    priceSub: { monthly: "/ mois", yearly: "/ an  ·  ~40 €/mois" },
+    monthlyPriceId: "price_1T8clZAufOS3IvBw4Swgd1WE",
+    yearlyPriceId:  "price_1T8cmfAufOS3IvBwiHUL5Yes",
     bullets: [
-      "Tout le plan Pro Mensuel inclus",
-      "2 mois offerts vs. mensuel",
-      "Acces prioritaire aux nouvelles fonctionnalites",
+      "Tout le plan Pro inclus",
       "Support prioritaire"
     ],
-    ctaLabel: "Go Pro Annuel",
-    ctaHref: "#go-pro-yearly"
+    comingSoon: [
+      "Alertes performance en temps réel",
+      "Journal de trading intelligent",
+      "Comparatif de régimes de marché",
+      "Connexion directe MT5 (live)"
+    ],
+    ctaLabel: "Go Elite"
   }
 ];
 
 export const plansFaq: FaqItem[] = [
   {
     id: "faq-1",
-    question: "Puis-je changer de plan a tout moment ?",
-    answer: "Oui, le passage de Decouverte a Pro est immediat et reversible."
+    question: "Puis-je changer de plan à tout moment ?",
+    answer: "Oui, le passage entre plans est immédiat et réversible depuis le portail Stripe."
   },
   {
     id: "faq-2",
-    question: "Le plan Pro ajoute-t-il des donnees supplementaires ?",
-    answer: "Il ajoute surtout plus de profondeur d'analyse et des outils de drilldown."
+    question: "L'essai Pro est-il gratuit ?",
+    answer: "Oui, le plan Pro inclut 10 jours d'essai gratuit sans carte de crédit requise."
   },
   {
     id: "faq-3",
-    question: "Un moyen de paiement est-il requis pour Decouverte ?",
-    answer: "Non, Decouverte est accessible sans paiement."
+    question: "Un moyen de paiement est-il requis pour Découverte ?",
+    answer: "Non, Découverte est accessible sans paiement ni carte."
   },
   {
     id: "faq-4",
-    question: "Quelle difference entre mensuel et annuel ?",
-    answer: "L'abonnement annuel donne acces aux memes fonctionnalites Pro avec 2 mois offerts, soit ~20 EUR/mois."
+    question: "Quelle différence entre mensuel et annuel ?",
+    answer: "L'abonnement annuel Pro est ~20 €/mois (vs 24,99 €), Elite ~40 €/mois (vs 49,99 €) — soit 2 mois offerts."
   }
 ];
