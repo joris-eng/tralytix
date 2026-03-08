@@ -29,7 +29,7 @@ export function Mt5ImportCard() {
     <div className={styles.importCard}>
       <div className={styles.importTitle}>Import CSV MT5</div>
       <div className={styles.importSubtitle}>
-        Importe tes trades depuis l'historique MetaTrader 5 au format CSV.
+        Importe tes trades depuis l&apos;historique MetaTrader 5 au format CSV.
       </div>
 
       {/* Dropzone */}

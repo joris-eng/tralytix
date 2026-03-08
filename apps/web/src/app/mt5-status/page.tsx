@@ -14,7 +14,7 @@ function Mt5PageContent() {
         <div className={styles.headerLeft}>
           <h1 className={styles.title}>MT5 Connection</h1>
           <span className={styles.subtitle}>
-            Statut du compte et import de l'historique de trading.
+            Statut du compte et import de l&apos;historique de trading.
           </span>
         </div>
       </header>

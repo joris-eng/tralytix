@@ -71,19 +71,22 @@ export function ProAnalysisScreen() {
     void refresh();
   }, [refresh]);
 
-  const trades = data?.trades ?? [];
+  const trades = useMemo(() => data?.trades ?? [], [data]);
   const filteredTrades = useMemo(() => filterTrades(trades, filters), [filters, trades]);
-  const selectedTrade =
-    filteredTrades.find((trade) => `${trade.ticket}-${trade.opened_at}` === selectedTradeKey) ??
-    filteredTrades[0] ??
-    trades.find((trade) => `${trade.ticket}-${trade.opened_at}` === selectedTradeKey) ??
-    null;
+  const selectedTrade = useMemo(
+    () =>
+      filteredTrades.find((trade) => `${trade.ticket}-${trade.opened_at}` === selectedTradeKey) ??
+      filteredTrades[0] ??
+      trades.find((trade) => `${trade.ticket}-${trade.opened_at}` === selectedTradeKey) ??
+      null,
+    [filteredTrades, trades, selectedTradeKey]
+  );
 
   useEffect(() => {
     if (selectedTrade) {
       setSelectedTradeKey(`${selectedTrade.ticket}-${selectedTrade.opened_at}`);
     }
-  }, [selectedTrade?.ticket, selectedTrade?.opened_at]);
+  }, [selectedTrade]);
 
   const columns: DataTableColumn<ProAnalysisTrade>[] = [
     {
