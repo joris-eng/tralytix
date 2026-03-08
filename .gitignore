@@ -28,3 +28,4 @@ apps/api/.env
 **/*.log
 apps/web/.env.local
 apps/api/scripts/
+apps/api/scripts/seed_trades.go
