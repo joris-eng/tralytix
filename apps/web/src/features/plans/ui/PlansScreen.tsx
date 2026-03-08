@@ -6,7 +6,6 @@ import { usePlan } from "@/shared/auth/useSessionState";
 import { plans, plansFaq } from "@/features/plans/data";
 import type { BillingPeriod, PlanTier } from "@/features/plans/model";
 import { PricingCard } from "@/features/plans/ui/PricingCard";
-import { Card, Divider, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
 
 export function PlansScreen() {
@@ -23,11 +22,7 @@ export function PlansScreen() {
     if (!planData) return;
 
     const priceId =
-      billingPeriod === "yearly"
-        ? planData.yearlyPriceId
-        : planData.monthlyPriceId;
-
-    console.log("[plans] handleCheckout tier=%s period=%s priceId=%s", tier, billingPeriod, priceId);
+      billingPeriod === "yearly" ? planData.yearlyPriceId : planData.monthlyPriceId;
 
     if (!priceId) {
       setError(`Missing Stripe price ID for ${tier} plan.`);
@@ -36,16 +31,13 @@ export function PlansScreen() {
 
     try {
       setLoadingTier(tier);
-      console.log("[plans] calling billingCheckout with priceId=%s", priceId);
       const payload = await apiClient.billingCheckout(priceId);
-      console.log("[plans] checkout response:", payload);
       if (!payload.checkout_url) {
         setError("Checkout URL missing from billing response.");
         return;
       }
       window.location.href = payload.checkout_url;
     } catch (err) {
-      console.error("[plans] checkout error:", err);
       const isAbort =
         (err instanceof DOMException && err.name === "AbortError") ||
         (err instanceof Error && err.name === "AbortError");
@@ -61,9 +53,12 @@ export function PlansScreen() {
 
   return (
     <section className={styles.page}>
+      {/* Header */}
       <header className={styles.header}>
-        <Heading level={1}>Plans</Heading>
-        <Text tone="muted">Choisissez une expérience adaptée à votre niveau.</Text>
+        <h1 className={styles.headerTitle}>Plans</h1>
+        <p className={styles.headerSub}>
+          Choisissez une expérience adaptée à votre niveau.
+        </p>
       </header>
 
       {/* Billing period toggle */}
@@ -80,11 +75,13 @@ export function PlansScreen() {
           className={billingPeriod === "yearly" ? styles.toggleActive : styles.toggleInactive}
           onClick={() => setBillingPeriod("yearly")}
         >
-          Annuel <span className={styles.savingsBadge}>2 mois offerts</span>
+          Annuel
+          <span className={styles.savingsBadge}>2 mois offerts</span>
         </button>
       </div>
 
-      <section className={styles.comparisonGrid} aria-label="Plan comparison">
+      {/* Cards */}
+      <section className={styles.comparisonGrid} aria-label="Comparaison des plans">
         {plans.map((item) => (
           <PricingCard
             key={item.tier}
@@ -98,26 +95,31 @@ export function PlansScreen() {
         ))}
       </section>
 
+      {/* Error */}
       {error ? (
-        <Text className="ui-text-error" size="sm" style={{ textAlign: "center", marginTop: 16 }}>
+        <p style={{
+          textAlign: "center",
+          fontFamily: "var(--ui-font-mono)",
+          fontSize: "var(--ui-font-size-sm)",
+          color: "var(--ui-color-danger)",
+          marginTop: 0,
+        }}>
           {error}
-        </Text>
+        </p>
       ) : null}
 
-      <Card>
-        <Heading level={2}>FAQ</Heading>
-        <div className={styles.faqList} style={{ marginTop: 12 }}>
-          {plansFaq.map((item, index) => (
+      {/* FAQ */}
+      <div className={styles.faqSection}>
+        <div className={styles.faqTitle}>Questions fréquentes</div>
+        <div className={styles.faqList}>
+          {plansFaq.map((item) => (
             <div key={item.id} className={styles.faqItem}>
-              <Heading level={3}>{item.question}</Heading>
-              <Text tone="muted" size="sm">
-                {item.answer}
-              </Text>
-              {index < plansFaq.length - 1 ? <Divider style={{ marginTop: 8 }} /> : null}
+              <div className={styles.faqQuestion}>{item.question}</div>
+              <div className={styles.faqAnswer}>{item.answer}</div>
             </div>
           ))}
         </div>
-      </Card>
+      </div>
     </section>
   );
 }
