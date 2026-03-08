@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export type DashboardMode = "simple" | "pro";
 
-export type HeroCardTone = "primary" | "warning" | "success";
+export type HeroCardTone = "primary" | "warning" | "success" | "danger";
 
 export type HeroMetric = {
   label: string;
@@ -17,6 +17,7 @@ export type InsightModel = {
   interpretation: string;
   recommendation: string;
   ctaLabel: string;
+  severity?: string; // "high" | "medium" | "low" from API
 };
 
 export type BreakdownModel = {
