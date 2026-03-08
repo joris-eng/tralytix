@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
@@ -114,9 +115,18 @@ func (h *Handler) checkout(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) webhook(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
-	if err == nil {
-		sigHeader := strings.TrimSpace(r.Header.Get("Stripe-Signature"))
-		_ = h.svc.HandleWebhook(r.Context(), body, sigHeader)
+	if err != nil {
+		log.Printf("[billing/webhook] failed to read request body: %v", err)
+		httpx.JSON(w, http.StatusOK, map[string]bool{"received": true})
+		return
+	}
+
+	sigHeader := strings.TrimSpace(r.Header.Get("Stripe-Signature"))
+	log.Printf("[billing/webhook] incoming webhook: body_len=%d sig_header_present=%v", len(body), sigHeader != "")
+
+	if err := h.svc.HandleWebhook(r.Context(), body, sigHeader); err != nil {
+		// Always return 200 to Stripe, but log the failure so it's visible in Render logs.
+		log.Printf("[billing/webhook] HandleWebhook error (plan NOT updated): %v", err)
 	}
 
 	httpx.JSON(w, http.StatusOK, map[string]bool{"received": true})
