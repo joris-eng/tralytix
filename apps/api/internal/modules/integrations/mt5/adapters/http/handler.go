@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -33,6 +34,8 @@ type service interface {
 	ImportCSV(ctx context.Context, accountID string, rawCSV []byte) (application.ImportResult, error)
 	Status(ctx context.Context, accountID string) (domain.AccountSnapshot, error)
 	ListTrades(ctx context.Context, accountID string, limit, offset int) (application.TradesResponse, error)
+	GetOrCreateEAToken(ctx context.Context, userID string) (string, error)
+	LiveSync(ctx context.Context, eaToken string, ev application.LiveSyncEvent) error
 }
 
 func NewHandler(
@@ -59,12 +62,15 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 		}
 		sr.Post("/integrations/mt5/import", h.importCSV)
 		sr.Get("/integrations/mt5/status", h.status)
+		sr.Get("/integrations/mt5/ea-token", h.getEAToken)
 		if h.requireProMW != nil {
 			sr.With(h.requireProMW).Get("/integrations/mt5/trades", h.listTrades)
 		} else {
 			sr.Get("/integrations/mt5/trades", h.listTrades)
 		}
 	})
+	// EA live sync — no JWT, authenticated by X-EA-Token header
+	r.Post("/integrations/mt5/live", h.liveSync)
 }
 
 func (h *Handler) importCSV(w http.ResponseWriter, r *http.Request) {
@@ -219,4 +225,47 @@ func (h *Handler) listTrades(w http.ResponseWriter, r *http.Request) {
 		Trades: trades,
 		Total:  response.Total,
 	})
+}
+
+func (h *Handler) getEAToken(w http.ResponseWriter, r *http.Request) {
+	userID, ok := authctx.AuthUserID(r.Context())
+	if !ok || userID == "" {
+		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	token, err := h.svc.GetOrCreateEAToken(r.Context(), userID)
+	if err != nil {
+		platformerrors.WriteHTTP(w, http.StatusInternalServerError, "could not get ea token")
+		return
+	}
+	httpx.JSON(w, http.StatusOK, map[string]string{"token": token})
+}
+
+func (h *Handler) liveSync(w http.ResponseWriter, r *http.Request) {
+	eaToken := strings.TrimSpace(r.Header.Get("X-EA-Token"))
+	if eaToken == "" {
+		platformerrors.WriteHTTP(w, http.StatusUnauthorized, "X-EA-Token header required")
+		return
+	}
+
+	var ev application.LiveSyncEvent
+	if err := json.NewDecoder(r.Body).Decode(&ev); err != nil {
+		platformerrors.WriteHTTP(w, http.StatusBadRequest, "invalid json body")
+		return
+	}
+
+	if err := h.svc.LiveSync(r.Context(), eaToken, ev); err != nil {
+		switch {
+		case errors.Is(err, application.ErrInvalidEAToken):
+			platformerrors.WriteHTTP(w, http.StatusUnauthorized, "invalid ea token")
+		case errors.Is(err, application.ErrInvalidAccount):
+			platformerrors.WriteHTTP(w, http.StatusBadRequest, "invalid account")
+		default:
+			platformerrors.WriteHTTP(w, http.StatusInternalServerError, "sync failed")
+		}
+		return
+	}
+
+	httpx.JSON(w, http.StatusOK, map[string]bool{"synced": true})
 }

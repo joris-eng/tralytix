@@ -18,7 +18,26 @@ var (
 	ErrTooManyRows     = errors.New("too many rows in import")
 	ErrInvalidAccount  = errors.New("invalid account id")
 	ErrImportNoTrades  = errors.New("no trade rows found")
+	ErrInvalidEAToken  = errors.New("invalid ea token")
 )
+
+// LiveSyncEvent is the payload sent by the MT5 Expert Advisor on each deal.
+type LiveSyncEvent struct {
+	Event      string  `json:"event"`       // "trade_opened" | "trade_closed" | "trade_modified"
+	Ticket     string  `json:"ticket"`
+	PositionID string  `json:"position_id"`
+	Symbol     string  `json:"symbol"`
+	Side       string  `json:"side"`        // "BUY" | "SELL"
+	Volume     float64 `json:"volume"`
+	OpenPrice  float64 `json:"open_price"`
+	ClosePrice float64 `json:"close_price"` // 0 if not closed yet
+	OpenedAt   string  `json:"opened_at"`   // RFC3339
+	ClosedAt   string  `json:"closed_at"`   // RFC3339, empty if still open
+	Profit     float64 `json:"profit"`
+	Commission float64 `json:"commission"`
+	Swap       float64 `json:"swap"`
+	Comment    string  `json:"comment"`
+}
 
 type ImportResult struct {
 	AccountID            string     `json:"account_id"`
@@ -154,6 +173,84 @@ func (s *Service) ListTrades(ctx context.Context, accountID string, limit, offse
 		Trades: trades,
 		Total:  len(trades),
 	}, nil
+}
+
+// GetOrCreateEAToken returns the user's EA token, creating one if needed.
+func (s *Service) GetOrCreateEAToken(ctx context.Context, userID string) (string, error) {
+	userID = strings.TrimSpace(userID)
+	if userID == "" {
+		return "", ErrInvalidAccount
+	}
+	return s.repo.GetOrCreateEAToken(ctx, userID)
+}
+
+// LiveSync authenticates an EA push by token and upserts the trade.
+func (s *Service) LiveSync(ctx context.Context, eaToken string, ev LiveSyncEvent) error {
+	eaToken = strings.TrimSpace(eaToken)
+	if eaToken == "" {
+		return ErrInvalidEAToken
+	}
+
+	userID, err := s.repo.GetUserByEAToken(ctx, eaToken)
+	if err != nil {
+		return ErrInvalidEAToken
+	}
+
+	openedAt, err := time.Parse(time.RFC3339, ev.OpenedAt)
+	if err != nil {
+		return fmt.Errorf("parse opened_at: %w", err)
+	}
+
+	var closedAt *time.Time
+	var closePrice *float64
+	if ev.ClosedAt != "" {
+		t, err := time.Parse(time.RFC3339, ev.ClosedAt)
+		if err == nil {
+			closedAt = &t
+		}
+	}
+	if ev.ClosePrice > 0 {
+		closePrice = &ev.ClosePrice
+	}
+
+	side := strings.ToUpper(ev.Side)
+	switch side {
+	case "BUY":
+		side = "LONG"
+	case "SELL":
+		side = "SHORT"
+	}
+
+	var comment *string
+	if c := strings.TrimSpace(ev.Comment); c != "" {
+		comment = &c
+	}
+
+	importedAt := s.clock.Now().UTC()
+	trade := domain.Trade{
+		AccountID:  userID,
+		Ticket:     strings.TrimSpace(ev.Ticket),
+		Symbol:     strings.ToUpper(strings.TrimSpace(ev.Symbol)),
+		Side:       side,
+		Volume:     ev.Volume,
+		OpenPrice:  ev.OpenPrice,
+		ClosePrice: closePrice,
+		OpenedAt:   openedAt.UTC(),
+		ClosedAt:   closedAt,
+		Commission: ev.Commission,
+		Swap:       ev.Swap,
+		Profit:     ev.Profit,
+		Comment:    comment,
+		ImportedAt: importedAt,
+	}
+	trade.SourceHash = computeSourceHash(trade)
+
+	if err := trade.Validate(); err != nil {
+		return fmt.Errorf("invalid trade: %w", err)
+	}
+
+	_, err = s.repo.SaveImportedTrades(ctx, []domain.Trade{trade})
+	return err
 }
 
 func normalizeTrade(t domain.Trade, accountID string, importedAt time.Time) domain.Trade {
