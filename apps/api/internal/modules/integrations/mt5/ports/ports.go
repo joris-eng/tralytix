@@ -11,6 +11,9 @@ type TradeRepository interface {
 	SaveImportedTrades(ctx context.Context, trades []domain.Trade) (int, error)
 	GetAccountSnapshot(ctx context.Context, accountID string) (domain.AccountSnapshot, error)
 	ListTrades(ctx context.Context, accountID string, limit, offset int) ([]domain.Trade, error)
+	// EA live sync
+	GetOrCreateEAToken(ctx context.Context, userID string) (string, error)
+	GetUserByEAToken(ctx context.Context, token string) (string, error)
 }
 
 type Importer interface {
