@@ -1,101 +1,127 @@
+"use client";
+
 import type { BillingPeriod, PlanModel } from "@/features/plans/model";
-import { FeatureList } from "@/features/plans/ui/FeatureList";
-import { Badge, Button, Card, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
 
-type PricingCardProps = {
+type Props = {
   plan: PlanModel;
   billingPeriod: BillingPeriod;
-  current?: boolean;
-  loading?: boolean;
-  disabled?: boolean;
-  onAction?: () => void;
+  current: boolean;
+  loading: boolean;
+  disabled: boolean;
+  onAction: () => void;
 };
 
 export function PricingCard({
   plan,
   billingPeriod,
-  current = false,
-  loading = false,
-  disabled = false,
+  current,
+  loading,
+  disabled,
   onAction,
-}: PricingCardProps) {
-  const priceLabel = plan.price ? plan.price[billingPeriod] : "Gratuit";
-  const priceSub = plan.priceSub ? plan.priceSub[billingPeriod] : null;
+}: Props) {
+  const price = plan.price
+    ? billingPeriod === "yearly"
+      ? plan.price.yearly
+      : plan.price.monthly
+    : null;
+
+  const priceSub = plan.priceSub
+    ? billingPeriod === "yearly"
+      ? plan.priceSub.yearly
+      : plan.priceSub.monthly
+    : null;
+
   const isFree = plan.tier === "free";
+  const isHighlighted = plan.highlighted;
 
   return (
-    <Card elevated={plan.highlighted} className={styles.pricingCard}>
-      {plan.highlighted ? (
-        <div className={styles.popularBadge}>
-          <Badge variant="primary">Le plus populaire</Badge>
-        </div>
-      ) : null}
-
-      {current ? (
-        <div className={styles.currentBadge}>
-          <Badge variant="success">Plan actuel</Badge>
-        </div>
-      ) : null}
-
-      {plan.trialDays && !isFree ? (
-        <div className={styles.trialBadge}>
-          <Badge variant="warning">{plan.trialDays} jours d&apos;essai gratuit</Badge>
-        </div>
-      ) : null}
-
-      <div>
-        <Heading level={2}>{plan.name}</Heading>
-        <Text tone="muted" size="sm" style={{ marginTop: 8 }}>
-          {plan.audience}
-        </Text>
-      </div>
-
-      <div className={styles.priceRow}>
-        <Heading level={1}>{priceLabel}</Heading>
-        {priceSub ? (
-          <Text tone="muted" size="sm" style={{ marginTop: 2 }}>
-            {priceSub}
-          </Text>
-        ) : null}
-      </div>
-
-      <FeatureList items={plan.bullets} />
-
-      {plan.comingSoon && plan.comingSoon.length > 0 ? (
-        <div className={styles.comingSoonSection}>
-          <Text tone="muted" size="sm" style={{ marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Prochainement
-          </Text>
-          <ul className={styles.comingSoonList}>
-            {plan.comingSoon.map((feature) => (
-              <li key={feature} className={styles.comingSoonItem}>
-                <span className={styles.comingSoonDot} />
-                {feature}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      <div className={styles.ctaRow}>
-        {isFree ? (
-          current ? (
-            <Button variant="neutral" disabled aria-label="Plan actuel">
-              Plan actuel
-            </Button>
-          ) : null
-        ) : (
-          <Button
-            variant={plan.highlighted ? "primary" : "neutral"}
-            aria-label={plan.ctaLabel}
-            onClick={onAction}
-            disabled={disabled || loading}
-          >
-            {loading ? "Redirection…" : current ? "Plan actuel" : plan.ctaLabel}
-          </Button>
+    <div
+      className={[
+        styles.card,
+        isHighlighted ? styles.cardHighlighted : "",
+        current ? styles.cardCurrent : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {/* Top badges row */}
+      <div className={styles.badgeRow}>
+        {plan.highlighted && (
+          <span className={styles.badgePopular}>✦ Le plus populaire</span>
+        )}
+        {plan.trialDays && (
+          <span className={styles.badgeTrial}>{plan.trialDays}j gratuits</span>
+        )}
+        {current && plan.tier !== "free" && (
+          <span className={styles.badgeCurrent}>Plan actuel</span>
+        )}
+        {current && plan.tier === "free" && (
+          <span className={styles.badgeCurrent}>Plan actuel</span>
         )}
       </div>
-    </Card>
+
+      {/* Plan name + description */}
+      <h2 className={styles.planName}>{plan.name}</h2>
+      <p className={styles.planAudience}>{plan.audience}</p>
+
+      {/* Price */}
+      <div className={styles.priceBlock}>
+        {isFree ? (
+          <span className={styles.priceFree}>Gratuit</span>
+        ) : (
+          <>
+            <span className={styles.priceAmount}>{price}</span>
+            {priceSub && <span className={styles.pricePeriod}> {priceSub}</span>}
+          </>
+        )}
+      </div>
+
+      {/* Tagline */}
+      {plan.tagline && <p className={styles.tagline}>{plan.tagline}</p>}
+
+      {/* Feature list */}
+      <ul className={styles.featureList}>
+        {plan.features.map((feat) => (
+          <li
+            key={feat.label}
+            className={feat.available ? styles.featAvailable : styles.featUnavailable}
+          >
+            <span className={styles.featIcon}>{feat.available ? "✓" : "✕"}</span>
+            <span className={styles.featLabel}>
+              {feat.label}
+              {feat.note && (
+                <span
+                  className={
+                    feat.available && feat.note !== "(1)"
+                      ? styles.featNoteCyan
+                      : styles.featNote
+                  }
+                >
+                  {" "}
+                  {feat.note}
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {/* CTA button */}
+      <button
+        type="button"
+        className={[
+          styles.ctaBtn,
+          isHighlighted && !current ? styles.ctaBtnPrimary : styles.ctaBtnGhost,
+          current && !isFree ? styles.ctaBtnCurrentPlan : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        disabled={disabled || loading}
+        onClick={onAction}
+      >
+        {loading ? "Chargement…" : current && !isFree ? "Plan actuel" : plan.ctaLabel}
+      </button>
+    </div>
   );
 }

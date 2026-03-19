@@ -1,80 +1,127 @@
 import type { FaqItem, PlanModel } from "@/features/plans/model";
 
+// All features in display order — presence in each plan defined below
+const ALL_FEATURES = [
+  "Dashboard KPIs basiques",
+  "Dashboard KPIs complets",
+  "AI-powered performance insights",
+  "Equity curve",
+  "Advanced trade drilldown analysis",
+  "Export CSV",
+  "Export Monthly Report (PDF)",
+  "Imports MT5",
+  "Support standard",
+  "Support prioritaire",
+  "Alertes performance",
+  "Journal de trading",
+  "Benchmark against other traders",
+  "Connexion directe MT5 (EA)",
+] as const;
+
+type Feature = (typeof ALL_FEATURES)[number];
+
+function f(label: Feature, available: boolean, note?: string) {
+  return { label, available, note };
+}
+
 export const plans: PlanModel[] = [
   {
     tier: "free",
     name: "Découverte",
     audience: "Pour débuter avec des signaux clairs et un cadre simple.",
     price: null,
-    priceSub: null,
-    bullets: [
-      "Dashboard KPIs basiques",
-      "1 import MT5 CSV",
-      "Insights de base",
-      "Accès limité aux analyses"
+    features: [
+      f("Dashboard KPIs basiques", true),
+      f("Dashboard KPIs complets", false),
+      f("AI-powered performance insights", false),
+      f("Equity curve", false),
+      f("Advanced trade drilldown analysis", false),
+      f("Export CSV", false),
+      f("Export Monthly Report (PDF)", false),
+      f("Imports MT5", true, "(1)"),
+      f("Support standard", false),
+      f("Support prioritaire", false),
+      f("Alertes performance", false),
+      f("Journal de trading", false),
+      f("Benchmark against other traders", false),
+      f("Connexion directe MT5 (EA)", false),
     ],
-    ctaLabel: "Plan actuel"
+    ctaLabel: "Commencer",
   },
   {
     tier: "pro",
     name: "Pro",
     audience: "Pour traders avancés qui veulent un drilldown complet.",
-    price: { monthly: "24,99 €", yearly: "239,99 €" },
-    priceSub: { monthly: "/ mois", yearly: "/ an  ·  ~20 €/mois" },
+    price: { monthly: "24,99 €", yearly: "249,90 €" },
+    priceSub: { monthly: "/ mois", yearly: "/ an" },
+    tagline: "Choisi par 80% des utilisateurs actifs",
     monthlyPriceId: "price_1T8ceVAufOS3IvBw2gPL3TYj",
-    yearlyPriceId:  "price_1T8cgPAufOS3IvBw7nsJYPAw",
+    yearlyPriceId: "price_1T8cgPAufOS3IvBw7nsJYPAw",
     trialDays: 10,
-    bullets: [
-      "Pro Analysis avec filtres avancés multi-segments",
-      "Diagnostics de leaks et analyse trade-level",
-      "Equity curve complète",
-      "Imports MT5 illimités",
-      "Export CSV"
+    features: [
+      f("Dashboard KPIs basiques", false),
+      f("Dashboard KPIs complets", true),
+      f("AI-powered performance insights", true),
+      f("Equity curve", true),
+      f("Advanced trade drilldown analysis", true),
+      f("Export CSV", true),
+      f("Export Monthly Report (PDF)", false),
+      f("Imports MT5", true, "(illimités)"),
+      f("Support standard", true),
+      f("Support prioritaire", false),
+      f("Alertes performance", false),
+      f("Journal de trading", false),
+      f("Benchmark against other traders", false),
+      f("Connexion directe MT5 (EA)", false),
     ],
     ctaLabel: "Go Pro",
-    highlighted: true
+    highlighted: true,
   },
   {
     tier: "elite",
     name: "Elite",
     audience: "Pour les traders qui veulent le niveau professionnel complet.",
-    price: { monthly: "49,99 €", yearly: "479,99 €" },
-    priceSub: { monthly: "/ mois", yearly: "/ an  ·  ~40 €/mois" },
+    price: { monthly: "49,99 €", yearly: "499,90 €" },
+    priceSub: { monthly: "/ mois", yearly: "/ an" },
     monthlyPriceId: "price_1T8clZAufOS3IvBw4Swgd1WE",
-    yearlyPriceId:  "price_1T8cmfAufOS3IvBwiHUL5Yes",
-    bullets: [
-      "Tout le plan Pro inclus",
-      "Support prioritaire"
+    yearlyPriceId: "price_1T8cmfAufOS3IvBwiHUL5Yes",
+    features: [
+      f("Dashboard KPIs basiques", false),
+      f("Dashboard KPIs complets", true),
+      f("AI-powered performance insights", true),
+      f("Equity curve", true),
+      f("Advanced trade drilldown analysis", true),
+      f("Export CSV", true),
+      f("Export Monthly Report (PDF)", true),
+      f("Imports MT5", true, "(illimités)"),
+      f("Support standard", false),
+      f("Support prioritaire", true),
+      f("Alertes performance", true),
+      f("Journal de trading", true),
+      f("Benchmark against other traders", true),
+      f("Connexion directe MT5 (EA)", true),
     ],
-    comingSoon: [
-      "Alertes performance en temps réel",
-      "Journal de trading intelligent",
-      "Comparatif de régimes de marché",
-      "Connexion directe MT5 (live)"
-    ],
-    ctaLabel: "Go Elite"
-  }
+    ctaLabel: "Go Elite",
+  },
 ];
 
 export const plansFaq: FaqItem[] = [
   {
     id: "faq-1",
     question: "Puis-je changer de plan à tout moment ?",
-    answer: "Oui, le passage entre plans est immédiat et réversible depuis le portail Stripe."
+    answer:
+      "Oui, vous pouvez upgrader ou downgrader votre plan à tout moment. Les changements prennent effet immédiatement.",
   },
   {
     id: "faq-2",
-    question: "L'essai Pro est-il gratuit ?",
-    answer: "Oui, le plan Pro inclut 10 jours d'essai gratuit sans carte de crédit requise."
+    question: "Comment fonctionne l'essai gratuit ?",
+    answer:
+      "Le plan Pro inclut 10 jours d'essai gratuit. Aucune carte bancaire n'est requise pour commencer.",
   },
   {
     id: "faq-3",
-    question: "Un moyen de paiement est-il requis pour Découverte ?",
-    answer: "Non, Découverte est accessible sans paiement ni carte."
+    question: "Mes données sont-elles sécurisées ?",
+    answer:
+      "Absolument. Toutes vos données de trading sont cryptées et stockées de manière sécurisée. Nous ne partageons jamais vos informations.",
   },
-  {
-    id: "faq-4",
-    question: "Quelle différence entre mensuel et annuel ?",
-    answer: "L'abonnement annuel Pro est ~20 €/mois (vs 24,99 €), Elite ~40 €/mois (vs 49,99 €) — soit 2 mois offerts."
-  }
 ];
