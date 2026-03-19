@@ -42,12 +42,48 @@ a {
 }
 
 .app-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.app-nav-logo-T {
+  width: 32px;
+  height: 32px;
+  background: var(--ui-color-primary);
+  color: #000;
   font-family: var(--ui-font-family);
   font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.12em;
-  color: var(--ui-color-text);
+  font-size: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+}
+
+.app-nav-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.app-nav-logo-name {
+  font-family: var(--ui-font-family);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ui-color-text);
+  line-height: 1;
+}
+
+.app-nav-logo-tag {
+  font-family: var(--ui-font-mono);
+  font-size: 9px;
+  color: var(--ui-color-text-subtle);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .app-nav-dot {

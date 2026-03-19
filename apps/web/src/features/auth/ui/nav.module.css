@@ -1,0 +1,132 @@
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+}
+
+.navLink {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+  padding: 6px 12px;
+  border-radius: var(--ui-radius-sm);
+  transition: color 150ms ease;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.navLink:hover {
+  color: var(--ui-color-text);
+}
+
+.navLinkActive {
+  color: var(--ui-color-text);
+  border-bottom: 2px solid var(--ui-color-primary);
+  border-radius: 0;
+  padding-bottom: 4px;
+}
+
+/* Dropdown */
+.dropdown {
+  position: relative;
+}
+
+.dropdownTrigger {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  transition: color 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dropdownTrigger:hover {
+  color: var(--ui-color-text);
+}
+
+.caret {
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--ui-color-surface-elevated);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  padding: 4px;
+  min-width: 160px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.dropdownItem {
+  display: block;
+  padding: 8px 12px;
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text-muted);
+  border-radius: 6px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.dropdownItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ui-color-text);
+}
+
+/* Nav right */
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+}
+
+.langSelector {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.langSelector:hover {
+  border-color: rgba(255,255,255,0.2);
+}
+
+.langFlag { font-size: 14px; }
+
+.langLabel {
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-muted);
+}
+
+.connectedBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--ui-font-mono);
+  font-size: var(--ui-font-size-xs);
+  color: var(--ui-color-text-muted);
+}
+
+.connectedDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ui-color-success);
+  box-shadow: 0 0 6px var(--ui-color-success);
+}

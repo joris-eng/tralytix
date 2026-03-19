@@ -1,8 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import { AuthNavLinks } from "@/features/auth/ui/AuthNavLinks";
-import { LogoutButton } from "@/features/auth/ui/LogoutButton";
 import { AuthSessionProvider } from "@/shared/auth/AuthSessionProvider";
+import { NavRight } from "@/features/auth/ui/NavRight";
 
 export const metadata: Metadata = {
   title: "Tralytix",
@@ -13,7 +13,7 @@ export default function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -25,17 +25,26 @@ export default function RootLayout({
       <body>
         <AuthSessionProvider>
           <div className="app-shell">
-            <nav className="app-nav">
-              <div className="app-nav-logo">
-                TRALYTIX<span className="app-nav-dot">.</span>
-              </div>
+            <header className="app-nav">
+              {/* Logo */}
+              <a href="/dashboard-v1" className="app-nav-logo">
+                <span className="app-nav-logo-T">T</span>
+                <div className="app-nav-logo-text">
+                  <span className="app-nav-logo-name">Tralytix</span>
+                  <span className="app-nav-logo-tag">TRADING ANALYTICS</span>
+                </div>
+              </a>
+
+              {/* Nav links */}
               <div className="app-nav-links">
                 <AuthNavLinks />
               </div>
+
+              {/* Right side */}
               <div className="app-nav-actions">
-                <LogoutButton />
+                <NavRight />
               </div>
-            </nav>
+            </header>
             <main className="app-main">
               {children}
             </main>

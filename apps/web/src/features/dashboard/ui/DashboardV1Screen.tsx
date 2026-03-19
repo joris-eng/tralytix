@@ -1,253 +1,431 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+  AreaChart, Area, CartesianGrid
+} from "recharts";
 import { useDashboardInsights, useDashboardSummary } from "@/features/dashboard/hooks";
-import type { BreakdownModel, DashboardInsights, DashboardMode, DashboardSummary, InsightModel, TopLeakModel } from "@/features/dashboard/model";
-import { BreakdownSection } from "@/features/dashboard/ui/BreakdownSection";
-import { DashboardHeader } from "@/features/dashboard/ui/DashboardHeader";
-import { HeroCards } from "@/features/dashboard/ui/HeroCards";
-import { InsightCardsSection } from "@/features/dashboard/ui/InsightCardsSection";
-import { TopLeaksSection } from "@/features/dashboard/ui/TopLeaksSection";
+import { useProAnalysisTrades } from "@/features/pro-analysis/hooks";
+import { Skeleton } from "@/features/ui/primitives";
 import { RequirePro } from "@/shared/auth/RequirePro";
-import { Card, Heading, Skeleton, Text } from "@/features/ui/primitives";
-// Note: Card/Heading imported for advanced-filters section below
-import styles from "@/features/dashboard/ui/dashboardV1.module.css";
+import styles from "@/features/dashboard/ui/dashboard.module.css";
 
-function formatPercent(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function parseNum(v: string | null | undefined): number {
+  if (!v) return 0;
+  const n = parseFloat(v);
+  return isFinite(n) ? n : 0;
 }
 
-function formatDecimal(value: number): string {
-  return value.toFixed(2);
+function fmtPct(v: number) { return `${(v * 100).toFixed(1)}%`; }
+function fmtDec(v: number, d = 2) { return v.toFixed(d); }
+function fmtMoney(v: number) {
+  const abs = Math.abs(v).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${v < 0 ? "- " : "+ "}$${abs}`;
 }
 
-function parseMetric(value: string | null | undefined): number {
-  if (!value) return 0;
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+function computeScore(winRate: number, pf: number) {
+  return Math.round(Math.max(0, Math.min(100, winRate * 100)) * 0.6 + Math.max(0, Math.min(100, Math.min(pf, 2) * 50)) * 0.4);
 }
 
-function computePerformanceScore(winRate: number, profitFactor: number): number {
-  const winRateScore = Math.max(0, Math.min(100, Math.round(winRate * 100)));
-  const pfScore = Math.max(0, Math.min(100, Math.round(Math.min(profitFactor, 2) * 50)));
-  return Math.round(winRateScore * 0.6 + pfScore * 0.4);
+function scoreRank(score: number) {
+  if (score >= 80) return "Top 5% trader";
+  if (score >= 60) return "Top 20% trader";
+  if (score >= 40) return "Top 40% trader";
+  return "Top 60% trader";
 }
 
-function mapBreakdown(summary: DashboardSummary | null): BreakdownModel[] {
-  if (!summary) return [];
+// ── Bar chart data from trades ────────────────────────────────────────────────
 
-  const winRate = parseMetric(summary.win_rate);
-  const profitFactor = parseMetric(summary.profit_factor);
-  const avgProfit = parseMetric(summary.avg_profit);
-  const edgeScore = Math.max(0, Math.min(100, Math.round(winRate * 100)));
-  const riskScore = Math.max(0, Math.min(100, Math.round(Math.min(profitFactor, 2) * 40)));
-  const disciplineScore = Math.max(0, Math.min(100, Math.round((profitFactor / 2) * 100)));
-  const efficiencyScore = Math.max(0, Math.min(100, Math.round(50 + avgProfit / 4)));
+type TradeEntry = { opened_at: string; profit: string | number };
 
-  return [
-    {
-      id: "edge",
-      label: "Edge",
-      score: String(edgeScore),
-      detail: `Win rate based on ${summary.total_trades} trades.`,
-      trendDirection: edgeScore >= 55 ? "up" : "flat"
-    },
-    {
-      id: "risk",
-      label: "Risk",
-      score: String(riskScore),
-      detail: `Profit factor currently at ${formatDecimal(profitFactor)}.`,
-      trendDirection: riskScore >= 50 ? "up" : "down"
-    },
-    {
-      id: "discipline",
-      label: "Discipline",
-      score: String(disciplineScore),
-      detail: "Execution consistency derived from risk-adjusted return profile.",
-      trendDirection: profitFactor >= 1 ? "up" : "down"
-    },
-    {
-      id: "efficiency",
-      label: "Efficiency",
-      score: String(efficiencyScore),
-      detail: `Average PnL per trade: ${formatDecimal(avgProfit)}.`,
-      trendDirection: avgProfit >= 0 ? "up" : "down"
-    }
-  ];
-}
+function buildTradeSeqData(trades: TradeEntry[]) {
+  const byDay: Record<string, number[]> = {};
+  for (const t of trades) {
+    const day = t.opened_at.slice(0, 10);
+    if (!byDay[day]) byDay[day] = [];
+    byDay[day].push(typeof t.profit === "string" ? parseFloat(t.profit) : t.profit);
+  }
 
-function mapInsights(insights: DashboardInsights | null): InsightModel[] {
-  if (!insights) return [];
-  return insights.top_insights.map((item, index) => ({
-    id: `insight-${index}`,
-    title: item.title,
-    interpretation: item.detail,
-    recommendation: `${insights.recommended_action.title}: ${insights.recommended_action.detail}`,
-    ctaLabel: "Review action",
-    severity: item.severity
+  const buckets: Record<string, number[]> = { "Trade 1": [], "Trade 2": [], "Trade 3": [], "Trade 4+": [] };
+  for (const dayTrades of Object.values(byDay)) {
+    dayTrades.forEach((profit, idx) => {
+      const key = idx < 3 ? `Trade ${idx + 1}` : "Trade 4+";
+      buckets[key].push(profit);
+    });
+  }
+
+  return Object.entries(buckets).map(([name, values]) => ({
+    name,
+    value: values.length > 0 ? parseFloat((values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)) : 0,
   }));
 }
 
-function mapTopLeaks(insights: DashboardInsights | null): TopLeakModel[] {
-  if (!insights) return [];
-  return insights.top_insights.map((item, index) => ({
-    id: `leak-${index}`,
-    leak: item.title,
-    impact: item.severity,
-    frequency: "Derived",
-    owner: "Strategy",
-    status: item.severity.toLowerCase().includes("high") ? "open" : "watch"
-  }));
+function tradeSeq13Avg(data: { name: string; value: number }[]) {
+  const items = data.filter(d => d.name !== "Trade 4+");
+  if (!items.length) return 0;
+  return items.reduce((a, b) => a + b.value, 0) / items.length;
 }
 
-function UpgradePrompt() {
+// ── Custom tooltip for equity ────────────────────────────────────────────────
+
+function EquityTooltip({ active, payload, label }: { active?: boolean; payload?: {value: number}[]; label?: string }) {
+  if (!active || !payload?.length) return null;
   return (
-    <div className="ui-card" style={{ textAlign: "center", padding: "2rem" }}>
-      <Heading>Pro Feature</Heading>
-      <Text className="ui-text-muted">Upgrade to Pro to access this feature.</Text>
+    <div style={{
+      background: "#12161f",
+      border: "1px solid rgba(255,255,255,0.12)",
+      borderRadius: 8,
+      padding: "8px 12px",
+      fontFamily: "var(--ui-font-mono)",
+      fontSize: 12,
+    }}>
+      <div style={{ color: "var(--ui-color-text-muted)", marginBottom: 4 }}>{label}</div>
+      <div style={{ color: "var(--ui-color-primary)" }}>equity : {payload[0].value.toLocaleString()}</div>
     </div>
   );
 }
 
+// ── Main screen ───────────────────────────────────────────────────────────────
+
 export function DashboardV1Screen() {
-  const [mode, setMode] = useState<DashboardMode>("simple");
-  const {
-    data: summary,
-    loading: summaryLoading,
-    error: summaryError,
-    refresh: refreshSummary
-  } = useDashboardSummary();
-  const {
-    data: insights,
-    loading: insightsLoading,
-    error: insightsError,
-    refresh: refreshInsights
-  } = useDashboardInsights();
+  const [period, setPeriod] = useState("9 mois");
+  const { data: summary, loading: sLoading, refresh: rSum } = useDashboardSummary();
+  const { data: insights, loading: iLoading, refresh: rIns } = useDashboardInsights();
+  const { data: tradesData, loading: tLoading, refresh: rTrades } = useProAnalysisTrades(200);
 
   useEffect(() => {
-    void refreshSummary();
-    void refreshInsights();
-  }, [refreshInsights, refreshSummary]);
+    void rSum();
+    void rIns();
+    void rTrades();
+  }, [rSum, rIns, rTrades]);
 
-  const breakdownItems = useMemo(() => mapBreakdown(summary), [summary]);
-  const insightItems = useMemo(() => mapInsights(insights), [insights]);
-  const topLeaksRows = useMemo(() => mapTopLeaks(insights), [insights]);
+  // Derived metrics
+  const metrics = useMemo(() => {
+    if (!summary) return null;
+    const winRate = parseNum(summary.win_rate);
+    const pf = parseNum(summary.profit_factor);
+    const avgProfit = parseNum(summary.avg_profit);
+    const totalProfit = parseNum(summary.total_profit);
+    return { winRate, pf, avgProfit, totalProfit, score: computeScore(winRate, pf) };
+  }, [summary]);
 
-  const headerSubtitle = useMemo(() => {
-    if (summaryError || insightsError) return "Some data is temporarily unavailable.";
-    if (!summary) return "Loading analytics…";
-    const winRate = parseMetric(summary.win_rate);
-    const totalTrades = summary.total_trades;
-    return `${totalTrades} trades · ${(winRate * 100).toFixed(1)}% win rate · Last 90 days`;
-  }, [summary, summaryError, insightsError]);
+  // Bar chart data
+  const seqData = useMemo(() => {
+    if (!tradesData?.trades) return null;
+    return buildTradeSeqData(tradesData.trades);
+  }, [tradesData]);
+
+  // Top insight
+  const topInsight = useMemo(() => {
+    if (!insights?.top_insights?.length) return null;
+    return insights.top_insights[0];
+  }, [insights]);
+
+  const subtitle = useMemo(() => {
+    if (!summary) return "Chargement…";
+    const wr = parseNum(summary.win_rate);
+    return [
+      `${summary.total_trades} trades`,
+      `${(wr * 100).toFixed(1)}% win rate`,
+      "Derniers 90 jours"
+    ];
+  }, [summary]);
+
+  const periods = ["3 mois", "6 mois", "9 mois", "1 an"];
 
   return (
-    <section className={styles.page}>
-      <DashboardHeader
-        title="Dashboard"
-        subtitle={headerSubtitle}
-        rangeLabel="Last 30 days"
-        mode={mode}
-        onModeChange={setMode}
-      />
-
-      {summaryLoading ? (
-        <div className={styles.heroGrid}>
-          <Skeleton height={150} />
-          <Skeleton height={150} />
-          <Skeleton height={150} />
-          <Skeleton height={150} />
+    <div className={styles.page}>
+      {/* ── Hero row ── */}
+      <div className={styles.heroRow}>
+        <div className={styles.heroLeft}>
+          <h1 className={styles.dashTitle}>Dashboard</h1>
+          <div className={styles.dashSubtitle}>
+            {sLoading ? <Skeleton height={16} width="220px" /> : Array.isArray(subtitle) ? (
+              subtitle.map((s, i) => (
+                <span key={s} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {i > 0 && <span className={styles.dashSubtitleDot} />}
+                  {s}
+                </span>
+              ))
+            ) : subtitle}
+          </div>
         </div>
-      ) : summaryError ? (
-        <Text className="ui-text-error">{summaryError}</Text>
-      ) : summary ? (
-        (() => {
-          const winRate = parseMetric(summary.win_rate);
-          const profitFactor = parseMetric(summary.profit_factor);
-          const avgProfit = parseMetric(summary.avg_profit);
-          const totalProfit = parseMetric(summary.total_profit);
-          const performanceScore = computePerformanceScore(winRate, profitFactor);
-          return (
-            <HeroCards
-              performanceScore={{
-                label: "Performance score",
-                value: `${performanceScore}`,
-                context: `${summary.total_trades} trades analyzed.`,
-                tone: performanceScore >= 60 ? "success" : performanceScore >= 40 ? "warning" : "danger"
-              }}
-              winRate={{
-                label: "Win rate",
-                value: formatPercent(winRate),
-                context: "Derived from closed trades.",
-                tone: winRate >= 0.5 ? "success" : winRate >= 0.4 ? "warning" : "danger"
-              }}
-              profitFactor={{
-                label: "Profit factor",
-                value: formatDecimal(profitFactor),
-                context: `Avg PnL ${formatDecimal(avgProfit)}.`,
-                tone: profitFactor >= 1.5 ? "success" : profitFactor >= 1.0 ? "warning" : "danger"
-              }}
-              totalProfit={{
-                label: "Total profit",
-                value: `${totalProfit >= 0 ? "+" : ""}${formatDecimal(totalProfit)}`,
-                context: `${summary.winners}W / ${summary.losers}L`,
-                tone: totalProfit >= 0 ? "success" : "danger"
-              }}
-            />
-          );
-        })()
-      ) : null}
 
-      <RequirePro fallback={<UpgradePrompt />}>
-        {insightsLoading ? (
-          <div className={styles.insightsGrid}>
-            <Skeleton height={140} />
-            <Skeleton height={140} />
+        <div className={styles.heroRight}>
+          {sLoading ? (
+            <Skeleton height={100} width="180px" />
+          ) : metrics ? (
+            <div className={styles.performanceCard}>
+              <div className={styles.performanceLabel}>Performance Score</div>
+              <div className={styles.performanceValue}>
+                {metrics.score}
+                <span className={styles.performanceMax}>/100</span>
+              </div>
+              <div className={styles.performanceSub}>{scoreRank(metrics.score)}</div>
+            </div>
+          ) : null}
+
+          <div className={styles.heroActions}>
+            <button className={styles.btnOutline} type="button">
+              <span>📄</span> Export Monthly Report
+            </button>
+            <button className={styles.btnOutline} type="button">
+              Derniers 30 jours
+            </button>
           </div>
-        ) : insightsError ? (
-          <Text className="ui-text-error">{insightsError}</Text>
-        ) : (
-          <InsightCardsSection items={insightItems} />
-        )}
+        </div>
+      </div>
+
+      {/* ── Top Performance Insight ── */}
+      <RequirePro>
+        {iLoading ? (
+          <Skeleton height={280} />
+        ) : topInsight ? (
+          <div className={styles.insightCard}>
+            <div className={styles.insightHeader}>
+              <div className={styles.insightIconWrap}>⚠</div>
+              <span className={styles.insightTitle}>Top Performance Insight</span>
+              <span className={`${styles.insightBadge} ${
+                topInsight.severity?.toLowerCase().includes("high") || topInsight.severity?.toLowerCase().includes("critical")
+                  ? styles.insightBadgeCritical
+                  : styles.insightBadgeWarning
+              }`}>
+                {topInsight.severity?.toUpperCase() ?? "INFO"}
+              </span>
+            </div>
+            <div className={styles.insightSubtitle}>{topInsight.detail}</div>
+
+            <div className={styles.insightBody}>
+              {/* Bar chart */}
+              <div className={styles.insightChartWrap}>
+                <div className={styles.insightChartLabel}>Average Return by Trade Number</div>
+                {tLoading || !seqData ? (
+                  <Skeleton height={160} />
+                ) : (
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={seqData} barCategoryGap="30%">
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fontFamily: "var(--ui-font-mono)", fontSize: 11, fill: "#8892a4" }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fontFamily: "var(--ui-font-mono)", fontSize: 10, fill: "#8892a4" }}
+                        axisLine={false}
+                        tickLine={false}
+                        width={36}
+                      />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {seqData.map((entry) => (
+                          <Cell
+                            key={entry.name}
+                            fill={entry.value >= 0 ? "var(--ui-color-success)" : "var(--ui-color-danger)"}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              {/* Stats + suggestion */}
+              <div className={styles.insightStats}>
+                {seqData && (
+                  <>
+                    <div className={styles.insightStatCard}>
+                      <div className={styles.insightStatLabel}>Trade 1–3</div>
+                      <div className={styles.insightStatValue} style={{ color: tradeSeq13Avg(seqData) >= 0 ? "var(--ui-color-success)" : "var(--ui-color-danger)" }}>
+                        {tradeSeq13Avg(seqData) >= 0 ? "+" : ""}{fmtDec(tradeSeq13Avg(seqData), 1)}%
+                      </div>
+                      <div className={styles.insightStatSub}>avg per trade</div>
+                    </div>
+                    <div className={styles.insightStatCard}>
+                      <div className={styles.insightStatLabel}>Trade 4+</div>
+                      <div className={styles.insightStatValue} style={{ color: (seqData.find(d => d.name === "Trade 4+")?.value ?? 0) >= 0 ? "var(--ui-color-success)" : "var(--ui-color-danger)" }}>
+                        {(seqData.find(d => d.name === "Trade 4+")?.value ?? 0) >= 0 ? "+" : ""}{fmtDec(seqData.find(d => d.name === "Trade 4+")?.value ?? 0, 1)}%
+                      </div>
+                      <div className={styles.insightStatSub}>avg per trade</div>
+                    </div>
+                  </>
+                )}
+
+                <div className={styles.insightSuggestion}>
+                  <div className={styles.insightSuggestionTitle}>✦ Suggested Improvement</div>
+                  <div className={styles.insightSuggestionText}>
+                    Limit your daily trading sessions to{" "}
+                    <span className={styles.insightSuggestionHighlight}>3 trades maximum</span>.
+                    Your decision quality decreases significantly after the third trade, likely due to fatigue or overtrading.
+                  </div>
+                  <button className={styles.insightCTA} type="button">
+                    Set Trade Limit →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </RequirePro>
 
-      {mode === "pro" ? (
-        <Card>
-          <Heading level={3}>Advanced Filters</Heading>
-          <Text tone="muted" size="sm" style={{ marginTop: 8 }}>
-            Placeholder controls for portfolio, setup class, volatility regime and session clusters.
-          </Text>
-          <div className={styles.advancedFilters}>
-            <span className={styles.filterToken}>Portfolio: Macro FX</span>
-            <span className={styles.filterToken}>Setup: Breakout</span>
-            <span className={styles.filterToken}>Regime: High Vol</span>
-            <span className={styles.filterToken}>Session: London/NY overlap</span>
-          </div>
-        </Card>
+      {/* ── KPI cards ── */}
+      {sLoading ? (
+        <div className={styles.kpiGrid}>
+          {[...Array(4)].map((_, i) => <Skeleton key={i} height={130} />)}
+        </div>
+      ) : metrics && summary ? (
+        <div className={styles.kpiGrid}>
+          <KpiCard
+            label="Performance Score"
+            icon="◎"
+            value={String(metrics.score)}
+            valueClass={styles.kpiValueCyan}
+            context={`${summary.total_trades} trades analysés.\nTop ${scoreRank(metrics.score)}`}
+            active
+          />
+          <KpiCard
+            label="Win Rate"
+            icon="↗"
+            value={fmtPct(metrics.winRate)}
+            valueClass={metrics.winRate >= 0.5 ? styles.kpiValueSuccess : metrics.winRate >= 0.4 ? styles.kpiValueWarning : styles.kpiValueDanger}
+            context="Dérivé des trades clôturés."
+          />
+          <KpiCard
+            label="Profit Factor"
+            icon="▐"
+            value={fmtDec(metrics.pf)}
+            valueClass={metrics.pf >= 1.5 ? styles.kpiValueSuccess : metrics.pf >= 1 ? styles.kpiValueWarning : styles.kpiValueDanger}
+            context={`PnL moy : ${fmtDec(metrics.avgProfit)}.`}
+          />
+          <KpiCard
+            label="Profit Total"
+            icon="$"
+            value={fmtMoney(metrics.totalProfit)}
+            valueClass={metrics.totalProfit >= 0 ? styles.kpiValueSuccess : styles.kpiValueDanger}
+            context={`${summary.winners}G / ${summary.losers}P\nBest performing pair: EUR/USD`}
+          />
+        </div>
       ) : null}
 
-      <RequirePro fallback={<UpgradePrompt />}>
-        {summaryLoading ? (
-          <div className={styles.breakdownGrid}>
-            <Skeleton height={160} />
-            <Skeleton height={160} />
-            <Skeleton height={160} />
-            <Skeleton height={160} />
-          </div>
-        ) : summaryError ? (
-          <Text className="ui-text-error">{summaryError}</Text>
-        ) : (
-          <BreakdownSection items={breakdownItems} />
-        )}
+      {/* ── Equity Curve ── */}
+      <RequirePro>
+        <EquityCurveSection period={period} periods={periods} onPeriod={setPeriod} />
       </RequirePro>
+    </div>
+  );
+}
 
-      {insightsLoading ? (
+// ── KPI card sub-component ────────────────────────────────────────────────────
+
+function KpiCard({ label, icon, value, valueClass, context, active }: {
+  label: string; icon: string; value: string; valueClass?: string;
+  context: string; active?: boolean;
+}) {
+  return (
+    <div className={`${styles.kpiCard} ${active ? styles.kpiCardActive : ""}`}>
+      <div className={styles.kpiHeader}>
+        <span className={styles.kpiLabel}>{label}</span>
+        <span className={styles.kpiIcon}>{icon}</span>
+      </div>
+      <div className={`${styles.kpiValue} ${valueClass ?? ""}`}>{value}</div>
+      <div className={styles.kpiContext}>
+        {context.split("\n").map((line, i) => <div key={i}>{line}</div>)}
+      </div>
+    </div>
+  );
+}
+
+// ── Equity curve sub-component ────────────────────────────────────────────────
+
+function EquityCurveSection({ period, periods, onPeriod }: {
+  period: string; periods: string[]; onPeriod: (p: string) => void;
+}) {
+  const { data: tradesData, loading, refresh } = useProAnalysisTrades(500);
+
+  useEffect(() => { void refresh(); }, [refresh]);
+
+  const equityData = useMemo(() => {
+    if (!tradesData?.trades) return [];
+    const sorted = [...tradesData.trades].sort(
+      (a, b) => new Date(a.opened_at).getTime() - new Date(b.opened_at).getTime()
+    );
+    let equity = 10000;
+    const monthly: Record<string, number> = {};
+    for (const t of sorted) {
+      equity += typeof t.profit === "string" ? parseFloat(t.profit) : t.profit;
+      const month = t.opened_at.slice(0, 7);
+      monthly[month] = Math.round(equity);
+    }
+    return Object.entries(monthly).map(([month, value]) => ({
+      name: new Date(month + "-01").toLocaleString("fr-FR", { month: "short" }),
+      equity: value
+    }));
+  }, [tradesData]);
+
+  return (
+    <div className={styles.equitySection}>
+      <div className={styles.equityHeader}>
+        <div className={styles.equityTitle}>Equity Curve</div>
+        <div className={styles.periodSelector}>
+          {periods.map(p => (
+            <button
+              key={p}
+              type="button"
+              className={`${styles.periodBtn} ${period === p ? styles.periodBtnActive : ""}`}
+              onClick={() => onPeriod(p)}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
         <Skeleton height={220} />
-      ) : insightsError ? (
-        <Text className="ui-text-error">{insightsError}</Text>
+      ) : equityData.length > 0 ? (
+        <ResponsiveContainer width="100%" height={220}>
+          <AreaChart data={equityData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="equityGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#00d4ff" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#00d4ff" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+            <XAxis
+              dataKey="name"
+              tick={{ fontFamily: "var(--ui-font-mono)", fontSize: 11, fill: "#8892a4" }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              tick={{ fontFamily: "var(--ui-font-mono)", fontSize: 10, fill: "#8892a4" }}
+              axisLine={false}
+              tickLine={false}
+              width={52}
+              tickFormatter={(v: number) => v.toLocaleString()}
+            />
+            <Tooltip content={<EquityTooltip />} cursor={{ stroke: "rgba(0,212,255,0.3)", strokeWidth: 1 }} />
+            <Area
+              type="monotone"
+              dataKey="equity"
+              stroke="#00d4ff"
+              strokeWidth={2}
+              fill="url(#equityGradient)"
+              dot={false}
+              activeDot={{ r: 5, fill: "#00d4ff", stroke: "#fff", strokeWidth: 1 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       ) : (
-        <TopLeaksSection mode={mode} rows={topLeaksRows} />
+        <div style={{ height: 220, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <span style={{ fontFamily: "var(--ui-font-mono)", fontSize: "var(--ui-font-size-sm)", color: "var(--ui-color-text-subtle)" }}>
+            Pas encore de données d&apos;equity.
+          </span>
+        </div>
       )}
-    </section>
+    </div>
   );
 }
