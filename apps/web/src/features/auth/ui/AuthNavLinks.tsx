@@ -130,17 +130,12 @@ export function AuthNavLinks() {
           { href: "/trades/revision", label: "Révision des Trades" },
         ]}
       />
-      <Link
-        href="/pro-analysis"
-        style={{
-          color: isActive("/pro-analysis") ? "var(--ui-color-primary)" : "var(--ui-color-muted)",
-          fontWeight: 600,
-          fontSize: "0.85rem",
-          textDecoration: "none",
-        }}
-      >
-        Analyse
-      </Link>
+      <NavDropdown
+        label="Analyse"
+        items={[
+          { href: "/pro-analysis", label: "Pro Analysis" },
+        ]}
+      />
       <Link
         href="/mt5-status"
         style={{
