@@ -22,6 +22,7 @@ export function AuthNavLinks() {
     <>
       <span className="session-badge">Connected</span>
       <Link href="/dashboard-v1">Dashboard</Link>
+      <Link href="/trades">Journal</Link>
       <Link href="/pro-analysis">Pro Analysis</Link>
       <Link href="/mt5-status">MT5</Link>
       <Link href="/plans">Plans</Link>
