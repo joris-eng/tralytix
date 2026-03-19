@@ -137,6 +137,17 @@ export function AuthNavLinks() {
         ]}
       />
       <Link
+        href="/mon-profil"
+        style={{
+          color: isActive("/mon-profil") ? "var(--ui-color-primary)" : "var(--ui-color-muted)",
+          fontWeight: 600,
+          fontSize: "0.85rem",
+          textDecoration: "none",
+        }}
+      >
+        Mon Profil
+      </Link>
+      <Link
         href="/mt5-status"
         style={{
           color: isActive("/mt5-status") ? "var(--ui-color-primary)" : "var(--ui-color-muted)",
