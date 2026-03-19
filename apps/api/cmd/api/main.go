@@ -26,6 +26,9 @@ import (
 	journaltransport "github.com/joris-eng/tralytix/apps/api/internal/modules/journal/adapters/http"
 	journalpostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/journal/adapters/postgres"
 	journalapplication "github.com/joris-eng/tralytix/apps/api/internal/modules/journal/application"
+	reviewtransport "github.com/joris-eng/tralytix/apps/api/internal/modules/review/adapters/http"
+	reviewpostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/review/adapters/postgres"
+	reviewapplication "github.com/joris-eng/tralytix/apps/api/internal/modules/review/application"
 	identitypostgres "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/data/postgres"
 	identitytransport "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/transport/http"
 	identityusecase "github.com/joris-eng/tralytix/apps/api/internal/modules/identity/usecase"
@@ -139,6 +142,10 @@ func main() {
 	journalService := journalapplication.NewService(journalRepo)
 	journalHandler := journaltransport.NewHandler(journalService, authMW)
 
+	reviewRepo := reviewpostgres.NewRepository(dbClient.Pool())
+	reviewService := reviewapplication.NewService(reviewRepo)
+	reviewHandler := reviewtransport.NewHandler(reviewService, authMW)
+
 	router := httpx.NewRouter(
 		httpx.RouterDeps{
 			Logger:         log,
@@ -159,6 +166,7 @@ func main() {
 		mt5Handler,
 		billingHandler,
 		journalHandler,
+		reviewHandler,
 	)
 	router = platformmiddleware.RequestID(router)
 
