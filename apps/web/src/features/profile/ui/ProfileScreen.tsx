@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDashboardSummary } from "@/features/dashboard/hooks";
 import { useProAnalysisTrades } from "@/features/pro-analysis/hooks";
 import type { ProAnalysisTrade } from "@/features/pro-analysis/model";
+import { ExportReportModal } from "@/shared/export/ExportReportModal";
 import styles from "@/features/profile/ui/profile.module.css";
 
 // ─── SVG Radar chart ───────────────────────────────────────────────
@@ -309,6 +310,8 @@ export function ProfileScreen() {
   const radarData = useMemo(() => computeRadarData(trades, winRate, profitFactor), [trades, winRate, profitFactor]);
   const patterns = useMemo(() => computePatterns(trades), [trades]);
 
+  const [showExport, setShowExport] = useState(false);
+
   // Benchmark (mock — would need comparison dataset)
   const BENCHMARK = 63;
   const PERCENTILE = 63;
@@ -442,7 +445,17 @@ export function ProfileScreen() {
         </div>
 
         <div className={styles.card}>
-          <div className={styles.cardLabel}>Score de performance</div>
+          <div className={styles.scoreCardHeader}>
+            <div className={styles.cardLabel}>Score de performance</div>
+            <button
+              type="button"
+              className={styles.exportBtn}
+              onClick={() => setShowExport(true)}
+            >
+              <span>📄</span>
+              Export Monthly Report
+            </button>
+          </div>
           <div className={styles.benchmarkMain}>
             <div className={styles.scoreSection}>
               <div className={styles.scoreRow}>
@@ -490,6 +503,7 @@ export function ProfileScreen() {
         </div>
       </section>
 
+      {showExport && <ExportReportModal onClose={() => setShowExport(false)} />}
     </div>
   );
 }

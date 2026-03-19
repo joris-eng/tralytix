@@ -64,7 +64,37 @@
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ui-color-muted);
+}
+
+.scoreCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.exportBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.exportBtn:hover {
+  background: rgba(0, 212, 232, 0.08);
+  border-color: rgba(0, 212, 232, 0.35);
+  color: #00d4e8;
 }
 
 /* ─── Section 1: Identité de Trading ─────────────────────────────── */
