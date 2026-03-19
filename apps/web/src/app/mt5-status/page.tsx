@@ -10,15 +10,12 @@ import styles from "@/features/mt5/ui/mt5.module.css";
 function Mt5PageContent() {
   return (
     <div className={styles.page}>
-      <header className={styles.header}>
-        <div className={styles.headerLeft}>
-          <h1 className={styles.title}>MT5 Connection</h1>
-          <span className={styles.subtitle}>
-            Statut du compte et import de l&apos;historique de trading.
-          </span>
-        </div>
-      </header>
-
+      <div>
+        <h1 className={styles.pageTitle}>Connexion MT5</h1>
+        <p className={styles.pageSubtitle}>
+          Importez vos données de trading depuis MetaTrader 5.
+        </p>
+      </div>
       <Mt5StatusCard />
       <Mt5ImportCard />
     </div>
