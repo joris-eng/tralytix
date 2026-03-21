@@ -12,6 +12,7 @@ import (
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/review/domain"
 	"github.com/joris-eng/tralytix/apps/api/internal/platform/authctx"
 	platformerrors "github.com/joris-eng/tralytix/apps/api/internal/platform/errors"
+	"github.com/joris-eng/tralytix/apps/api/internal/platform/httpx"
 )
 
 type service interface {
@@ -111,12 +112,6 @@ func toTradeResp(t domain.TradeWithReview) tradeResp {
 	return tr
 }
 
-func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
-}
-
 func domainErr(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
@@ -157,7 +152,7 @@ func (h *Handler) list(w http.ResponseWriter, r *http.Request) {
 	for _, t := range result.Trades {
 		resp.Trades = append(resp.Trades, toTradeResp(t))
 	}
-	writeJSON(w, http.StatusOK, resp)
+	httpx.JSON(w, http.StatusOK, resp)
 }
 
 func (h *Handler) upsert(w http.ResponseWriter, r *http.Request) {
@@ -192,7 +187,7 @@ func (h *Handler) upsert(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, reviewResp{
+	httpx.JSON(w, http.StatusOK, reviewResp{
 		ID:           review.ID,
 		TradeID:      review.TradeID,
 		Rating:       review.Rating,
@@ -221,5 +216,5 @@ func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
 		domainErr(w, r, err)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	httpx.JSON(w, http.StatusNoContent, nil)
 }
