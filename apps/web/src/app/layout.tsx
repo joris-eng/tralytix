@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AuthNavLinks } from "@/features/auth/ui/AuthNavLinks";
 import { LogoutButton } from "@/features/auth/ui/LogoutButton";
 import { AuthSessionProvider } from "@/shared/auth/AuthSessionProvider";
+import { NotificationBell } from "@/shared/notifications/NotificationBell";
 
 export const metadata: Metadata = {
   title: "Tralytix",
@@ -33,6 +34,7 @@ export default function RootLayout({
                 <AuthNavLinks />
               </div>
               <div className="app-nav-actions">
+                <NotificationBell />
                 <LogoutButton />
               </div>
             </nav>

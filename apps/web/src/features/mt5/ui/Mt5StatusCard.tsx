@@ -1,106 +1,125 @@
 "use client";
 
 import { useMt5Status } from "@/features/mt5/hooks";
-import { Skeleton } from "@/features/ui/primitives";
 import styles from "@/features/mt5/ui/mt5.module.css";
 
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return "—";
-  try {
-    return new Intl.DateTimeFormat("fr-FR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
+function fmtDate(d: string | null | undefined): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
 }
 
-function statusLabel(status: string | undefined): string {
-  if (status === "ok") return "Connecté";
-  if (status === "idle") return "En attente";
-  return "Erreur";
+function fmtTime(d: string | null | undefined): string {
+  if (!d) return "";
+  return new Date(d).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function statusKey(status: string | undefined): string {
-  if (status === "ok") return "ok";
-  if (status === "idle") return "idle";
-  return "error";
+function timeSince(d: string | null | undefined): string {
+  if (!d) return "jamais";
+  const secs = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
+  if (secs < 60) return "à l'instant";
+  if (secs < 3600) return `${Math.floor(secs / 60)} minutes ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)} hours ago`;
+  return `${Math.floor(secs / 86400)} days ago`;
+}
+
+function nextSync(d: string | null | undefined): string {
+  if (!d) return "—";
+  const next = new Date(new Date(d).getTime() + 60 * 60 * 1000);
+  const diff = Math.max(0, Math.floor((next.getTime() - Date.now()) / 60000));
+  if (diff <= 0) return "Maintenant";
+  return `In ${diff} minutes`;
 }
 
 export function Mt5StatusCard() {
   const { data, loading, error, refresh } = useMt5Status();
 
-  const account = data?.account_id ?? data?.AccountID;
-  const totalTrades = data?.total_trades ?? data?.TotalTrades ?? 0;
-  const importStatus = data?.last_import_status ?? data?.LastImportStatus;
-  const importedAt = data?.last_imported_at ?? data?.LastImportedAt;
+  const totalTrades = data?.total_trades ?? 0;
+  const importStatus = data?.last_import_status ?? null;
+  const lastImport = data?.last_imported_at ?? null;
+  const accountId = data?.account_id ?? null;
+  const isConnected = importStatus === "ok" || (totalTrades > 0);
 
   return (
     <div className={styles.statusCard}>
-      <div className={styles.statusHeader}>
-        <span className={styles.statusLabel}>Compte MT5</span>
-        {data && !loading && (
-          <span className={styles.statusBadge} data-status={statusKey(importStatus)}>
-            <span className={styles.statusDot} />
-            {statusLabel(importStatus)}
-          </span>
-        )}
-      </div>
-
-      {loading ? (
-        <div style={{ display: "grid", gap: 12 }}>
-          <Skeleton height={20} />
-          <Skeleton height={20} width="70%" />
-        </div>
-      ) : error ? (
-        <p style={{ fontFamily: "var(--ui-font-mono)", fontSize: "var(--ui-font-size-sm)", color: "var(--ui-color-danger)" }}>
-          {error}
-        </p>
-      ) : data ? (
-        <>
-          <div className={styles.metricsGrid}>
-            <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Trades</span>
-              <span className={styles.metricValue} data-accent="primary">{totalTrades}</span>
-              <span className={styles.metricSub}>historique complet</span>
-            </div>
-            <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Statut import</span>
-              <span className={styles.metricValue} style={{ fontSize: "1rem", marginTop: 4 }}>
-                {statusLabel(importStatus)}
-              </span>
-            </div>
-            <div className={styles.metricItem}>
-              <span className={styles.metricLabel}>Dernier import</span>
-              <span className={styles.metricValue} style={{ fontSize: "0.85rem", marginTop: 4 }}>
-                {formatDate(importedAt)}
-              </span>
-            </div>
-          </div>
-
-          {account && (
-            <div className={styles.accountId}>
-              <span className={styles.accountIdLabel}>Account ID</span>
-              {account}
-            </div>
+      {/* Header */}
+      <div className={styles.statusCardHeader}>
+        <h2 className={styles.statusCardTitle}>Connection Status</h2>
+        <div className={styles.statusCardRight}>
+          {lastImport && (
+            <span className={styles.lastSync}>
+              🕐 Last sync: <strong>{timeSince(lastImport)}</strong>
+            </span>
           )}
-        </>
-      ) : null}
-
-      <div style={{ marginTop: "var(--ui-space-4)" }}>
-        <button
-          className="ui-button"
-          data-variant="ghost"
-          onClick={() => void refresh()}
-          disabled={loading}
-        >
-          {loading ? "Chargement…" : "↻ Rafraîchir"}
-        </button>
+          <span className={styles.autoSyncBadge}>
+            <span className={styles.autoSyncDot} />
+            Auto-sync: enabled
+          </span>
+        </div>
       </div>
+
+      {/* Metrics */}
+      {loading ? (
+        <div className={styles.metricsGrid}>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className={styles.metricBox}>
+              <div className={styles.skeletonLine} style={{ width: "60%" }} />
+              <div className={styles.skeletonLine} style={{ width: "40%", height: 28 }} />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className={styles.metricsGrid}>
+          <div className={styles.metricBox}>
+            <span className={styles.metricLabel}>Total trades</span>
+            <span className={styles.metricValue} data-cyan="true">{totalTrades}</span>
+            <span className={styles.metricSub}>{totalTrades} trades importés</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricLabel}>Status</span>
+            <span
+              className={styles.metricValue}
+              data-cyan="true"
+              style={{ color: isConnected ? "var(--ui-color-primary)" : "#ff4466" }}
+            >
+              {isConnected ? "Connected" : error ? "Error" : "Pending"}
+            </span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricLabel}>Last import</span>
+            <span className={styles.metricValue} style={{ fontSize: "1.05rem" }}>
+              {fmtDate(lastImport)}
+            </span>
+            {lastImport && <span className={styles.metricSub}>{fmtTime(lastImport)}</span>}
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricLabel}>Next sync</span>
+            <span className={styles.metricValue} style={{ fontSize: "1.05rem" }}>
+              {nextSync(lastImport)}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Account ID */}
+      {accountId && (
+        <div className={styles.accountIdBox}>
+          <span className={styles.accountIdLabel}>Account ID</span>
+          <span className={styles.accountIdValue}>{accountId}</span>
+        </div>
+      )}
+
+      {/* Refresh */}
+      <button
+        className={styles.refreshBtn}
+        onClick={() => void refresh()}
+        disabled={loading}
+      >
+        {loading ? "…" : "↻"} Refresh Now
+      </button>
     </div>
   );
 }

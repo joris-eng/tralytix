@@ -1,0 +1,390 @@
+/* ─── Page ────────────────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  padding: 2rem 2.4rem;
+  background: var(--ui-color-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+/* ─── Section block ───────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.sectionIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255,180,0,0.15);
+  border: 1px solid rgba(255,180,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--ui-color-text);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.sectionSubtitle {
+  font-size: 0.82rem;
+  color: var(--ui-color-primary);
+  margin: 0;
+}
+
+/* ─── Generic card ────────────────────────────────────────────────── */
+.card {
+  border-radius: 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--ui-color-border);
+  padding: 1.6rem 2rem;
+}
+
+.cardLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-color-muted);
+}
+
+.scoreCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.exportBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.exportBtn:hover {
+  background: rgba(0, 212, 232, 0.08);
+  border-color: rgba(0, 212, 232, 0.35);
+  color: #00d4e8;
+}
+
+/* ─── Section 1: Identité de Trading ─────────────────────────────── */
+.identityCard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 860px) { .identityCard { grid-template-columns: 1fr; } }
+
+.radarWrap {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ─── Benchmark card (shared) ─────────────────────────────────────── */
+.benchmarkCard {
+  border-radius: 12px;
+  background: rgba(0,180,220,0.06);
+  border: 1px solid rgba(0,180,220,0.15);
+  padding: 1.4rem 1.8rem;
+  min-width: 220px;
+  max-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.benchmarkLabel {
+  font-size: 0.82rem;
+  color: var(--ui-color-muted);
+}
+
+.benchmarkValue {
+  font-family: 'DM Mono', monospace;
+  font-size: 2.8rem;
+  font-weight: 800;
+  color: var(--ui-color-primary);
+  line-height: 1;
+}
+
+.benchmarkSub {
+  font-size: 0.8rem;
+  color: var(--ui-color-muted);
+  line-height: 1.4;
+}
+
+/* ─── Section 2: Patterns Comportementaux ────────────────────────── */
+.patternsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) { .patternsGrid { grid-template-columns: 1fr; } }
+
+.patternCard {
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,130,0,0.25);
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.patternWarning {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: #ffaa00;
+  font-weight: 500;
+}
+
+.patternAmount {
+  font-family: 'DM Mono', monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ff4466;
+  line-height: 1;
+}
+
+.patternDesc {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.patternDelta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #00c864;
+  margin-left: auto;
+}
+
+/* ─── Section 3: Évolution ────────────────────────────────────────── */
+.evolutionCard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 860px) { .evolutionCard { grid-template-columns: 1fr; } }
+
+.chartWrap {
+  width: 100%;
+  min-height: 200px;
+}
+
+/* ─── Section 4: Classement & Benchmark ──────────────────────────── */
+.benchmarkMain {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 860px) { .benchmarkMain { grid-template-columns: 1fr; } }
+
+.scoreSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.scoreValue {
+  font-family: 'DM Mono', monospace;
+  font-size: 4rem;
+  font-weight: 800;
+  color: var(--ui-color-text);
+  line-height: 1;
+}
+
+.scoreMax {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.5rem;
+  color: var(--ui-color-muted);
+}
+
+.scoreBar {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.scoreBarFill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #00b4ff, var(--ui-color-primary));
+  transition: width 0.6s ease;
+}
+
+/* ─── Percentile donut ────────────────────────────────────────────── */
+.percentileWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.percentileCircle {
+  position: relative;
+  width: 160px;
+  height: 160px;
+}
+
+.percentileCircle svg {
+  transform: rotate(-90deg);
+}
+
+.percentileInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.percentileNum {
+  font-family: 'DM Mono', monospace;
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--ui-color-text);
+  line-height: 1;
+}
+
+.percentileLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ui-color-muted);
+}
+
+.topTierBadge {
+  display: inline-flex;
+  padding: 0.25rem 0.7rem;
+  border-radius: 20px;
+  background: rgba(0,200,100,0.15);
+  border: 1px solid rgba(0,200,100,0.3);
+  color: #00c864;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ─── Category cards ──────────────────────────────────────────────── */
+.categoryTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ui-color-text);
+  margin: 0.5rem 0 0;
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 900px) { .categoryGrid { grid-template-columns: repeat(2, 1fr); } }
+
+.categoryCard {
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--ui-color-border);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.categoryCardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--ui-color-muted);
+  font-weight: 500;
+}
+
+.categoryCardValue {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.categoryCardSub {
+  font-size: 0.78rem;
+  color: var(--ui-color-muted);
+  font-family: 'DM Mono', monospace;
+}
+
+.categoryCardDelta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #00c864;
+  align-self: flex-end;
+}
+
+.skeletonLine {
+  height: 14px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  animation: pulse 1.5s ease-in-out infinite;
+  margin: 4px 0;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.35; }
+}
