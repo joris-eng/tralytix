@@ -1,24 +1,20 @@
 import type { FaqItem, PlanModel } from "@/features/plans/model";
 
-// All features in display order — presence in each plan defined below
-const ALL_FEATURES = [
-  "Dashboard KPIs basiques",
-  "Dashboard KPIs complets",
-  "AI-powered performance insights",
-  "Equity curve",
-  "Advanced trade drilldown analysis",
-  "Export CSV",
-  "Export Monthly Report (PDF)",
-  "Imports MT5",
-  "Support standard",
-  "Support prioritaire",
-  "Alertes performance",
-  "Journal de trading",
-  "Benchmark against other traders",
-  "Connexion directe MT5 (EA)",
-] as const;
-
-type Feature = (typeof ALL_FEATURES)[number];
+type Feature =
+  | "Dashboard KPIs basiques"
+  | "Dashboard KPIs complets"
+  | "AI-powered performance insights"
+  | "Equity curve"
+  | "Advanced trade drilldown analysis"
+  | "Export CSV"
+  | "Export Monthly Report (PDF)"
+  | "Imports MT5"
+  | "Support standard"
+  | "Support prioritaire"
+  | "Alertes performance"
+  | "Journal de trading"
+  | "Benchmark against other traders"
+  | "Connexion directe MT5 (EA)";
 
 function f(label: Feature, available: boolean, note?: string) {
   return { label, available, note };
