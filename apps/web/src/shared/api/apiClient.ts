@@ -52,6 +52,8 @@ export const apiClient = {
     }),
   billingPlan: () => httpRequest<{ plan: "free" | "pro" }>(privateClient, "GET", "/billing/plan"),
   mt5AnalyticsRecomputeDaily: () =>
-    httpRequest<unknown>(privateClient, "POST", "/integrations/mt5/analytics/recompute-daily")
+    httpRequest<unknown>(privateClient, "POST", "/integrations/mt5/analytics/recompute-daily"),
+  mt5EAToken: () =>
+    httpRequest<{ token: string }>(privateClient, "GET", "/integrations/mt5/ea-token"),
 };
 

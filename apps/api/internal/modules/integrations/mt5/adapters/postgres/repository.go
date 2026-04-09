@@ -2,13 +2,19 @@ package postgres
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joris-eng/tralytix/apps/api/internal/modules/integrations/mt5/domain"
 )
+
+var ErrInvalidEAToken = errors.New("invalid ea token")
 
 type Repository struct {
 	pool *pgxpool.Pool
@@ -172,4 +178,50 @@ LIMIT $2 OFFSET $3`
 	}
 
 	return trades, nil
+}
+
+func (r *Repository) GetOrCreateEAToken(ctx context.Context, userID string) (string, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return "", fmt.Errorf("parse user id: %w", err)
+	}
+
+	var existing *string
+	err = r.pool.QueryRow(ctx, `SELECT ea_token FROM users WHERE id = $1`, uid).Scan(&existing)
+	if err != nil {
+		return "", fmt.Errorf("query ea token: %w", err)
+	}
+	if existing != nil && *existing != "" {
+		return *existing, nil
+	}
+
+	token, err := generateToken()
+	if err != nil {
+		return "", fmt.Errorf("generate token: %w", err)
+	}
+	_, err = r.pool.Exec(ctx, `UPDATE users SET ea_token = $1 WHERE id = $2`, token, uid)
+	if err != nil {
+		return "", fmt.Errorf("save ea token: %w", err)
+	}
+	return token, nil
+}
+
+func (r *Repository) GetUserByEAToken(ctx context.Context, token string) (string, error) {
+	var userID uuid.UUID
+	err := r.pool.QueryRow(ctx, `SELECT id FROM users WHERE ea_token = $1`, token).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrInvalidEAToken
+	}
+	if err != nil {
+		return "", fmt.Errorf("query user by ea token: %w", err)
+	}
+	return userID.String(), nil
+}
+
+func generateToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }

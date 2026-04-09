@@ -5,6 +5,7 @@ import { AuthGate } from "@/shared/auth/AuthGate";
 import { useRequireAuth } from "@/shared/auth/useSessionState";
 import { Mt5StatusCard } from "@/features/mt5/ui/Mt5StatusCard";
 import { Mt5ImportCard } from "@/features/mt5/ui/Mt5ImportCard";
+import { Mt5EASetupCard } from "@/features/mt5/ui/Mt5EASetupCard";
 import styles from "@/features/mt5/ui/mt5.module.css";
 
 function Mt5PageContent() {
@@ -17,6 +18,7 @@ function Mt5PageContent() {
         </p>
       </div>
       <Mt5StatusCard />
+      <Mt5EASetupCard />
       <Mt5ImportCard />
     </div>
   );
