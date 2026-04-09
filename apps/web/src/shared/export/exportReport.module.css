@@ -1,0 +1,253 @@
+/* ─── Backdrop ────────────────────────────────────────────────── */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ─── Modal ───────────────────────────────────────────────────── */
+.modal {
+  background: #0e1421;
+  border: 1px solid rgba(0, 212, 232, 0.15);
+  border-radius: 18px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: fadeUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ─── Header ──────────────────────────────────────────────────── */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+}
+
+.modalIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 212, 232, 0.12);
+  border: 1px solid rgba(0, 212, 232, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00d4e8;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.modalTitleBlock {
+  flex: 1;
+}
+
+.modalTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 3px;
+}
+
+.modalPeriod {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: 'DM Mono', monospace;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.12s, background 0.12s;
+  line-height: 1;
+}
+
+.modalClose:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ─── Body ────────────────────────────────────────────────────── */
+.modalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Sections ────────────────────────────────────────────────── */
+.sectionsLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.sectionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 6px;
+}
+
+.sectionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.12s;
+  user-select: none;
+}
+
+.sectionRow:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sectionRowIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 212, 232, 0.1);
+  border: 1px solid rgba(0, 212, 232, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #00d4e8;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.sectionRowLabel {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Toggle */
+.toggle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.toggleOn {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+.toggleOnDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* ─── Info box ────────────────────────────────────────────────── */
+.infoBox {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(0, 212, 232, 0.05);
+  border: 1px solid rgba(0, 212, 232, 0.12);
+  border-radius: 10px;
+}
+
+.infoBoxIcon {
+  color: #00d4e8;
+  font-size: 1rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.infoBoxText {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.6;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────── */
+.modalFooter {
+  display: flex;
+  gap: 10px;
+  padding: 16px 24px 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.cancelBtn:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.downloadBtn {
+  flex: 2;
+  padding: 12px;
+  background: linear-gradient(135deg, #00d4e8 0%, #007cf0 100%);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity 0.15s;
+}
+
+.downloadBtn:hover {
+  opacity: 0.88;
+}
+
+.downloadBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

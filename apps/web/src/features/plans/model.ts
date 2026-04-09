@@ -6,20 +6,25 @@ export type PlanPrice = {
   yearly: string;
 };
 
+export type PlanFeature = {
+  label: string;
+  /** true = available (green ✓), false = unavailable (red ✗) */
+  available: boolean;
+  /** Optional note shown inline e.g. "(1)" or "(illimités)" */
+  note?: string;
+};
+
 export type PlanModel = {
   tier: PlanTier;
   name: string;
   audience: string;
-  /** null = free plan (no price) */
   price: PlanPrice | null;
-  priceSub: PlanPrice | null;
+  priceSub?: PlanPrice;
+  tagline?: string;
   monthlyPriceId?: string;
   yearlyPriceId?: string;
-  /** Number of free trial days (Pro only) */
   trialDays?: number;
-  bullets: string[];
-  /** Features listed as "coming soon" (dimmed, badge) */
-  comingSoon?: string[];
+  features: PlanFeature[];
   ctaLabel: string;
   highlighted?: boolean;
 };

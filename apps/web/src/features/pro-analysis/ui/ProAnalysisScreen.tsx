@@ -3,34 +3,35 @@
 import { useEffect, useMemo, useState } from "react";
 import { useProAnalysisTrades } from "@/features/pro-analysis/hooks";
 import type { ProAnalysisFilters, ProAnalysisTrade } from "@/features/pro-analysis/model";
-import { SegmentSelector } from "@/features/pro-analysis/ui/SegmentSelector";
-import { DataTable, type DataTableColumn, FilterBar } from "@/features/ui/components";
-import { Badge, Button, Card, Heading, Skeleton, Text } from "@/features/ui/primitives";
 import styles from "@/features/pro-analysis/ui/proAnalysis.module.css";
 
 const DEFAULT_FILTERS: ProAnalysisFilters = {
   dateRange: "Last 30 days",
   symbol: "ALL",
-  side: "ALL"
+  side: "ALL",
 };
+
+const PAGE_SIZE = 5;
+
+// ─── Helpers ──────────────────────────────────────────────────────
 
 function formatDateTime(value: string | null | undefined): string {
   if (!value) return "—";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-  return date.toLocaleString();
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  const date = d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return `${date} ${time}`;
 }
 
-function formatProfit(value: number): string {
-  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
+function formatPrice(v: number): string {
+  if (v >= 1000) return v.toFixed(1);
+  if (v >= 100) return v.toFixed(2);
+  return v.toFixed(4);
 }
 
-function formatPrice(value: number): string {
-  if (value >= 1000) return value.toFixed(1);
-  if (value >= 100) return value.toFixed(2);
-  return value.toFixed(4);
+function formatProfit(v: number): string {
+  return `${v >= 0 ? "+" : ""}${v.toFixed(1)}`;
 }
 
 function rangeToDays(value: string): number | null {
@@ -41,315 +42,327 @@ function rangeToDays(value: string): number | null {
 }
 
 function filterTrades(rows: ProAnalysisTrade[], filters: ProAnalysisFilters): ProAnalysisTrade[] {
-  const daysRange = rangeToDays(filters.dateRange);
+  const days = rangeToDays(filters.dateRange);
   const now = new Date();
-
   return rows.filter((row) => {
     const openedAt = new Date(row.opened_at);
     const dateMatch =
-      daysRange === null ||
+      days === null ||
       Number.isNaN(openedAt.getTime()) ||
-      now.getTime() - openedAt.getTime() <= daysRange * 24 * 60 * 60 * 1000;
+      now.getTime() - openedAt.getTime() <= days * 86400_000;
     const symbolMatch = filters.symbol === "ALL" || row.symbol === filters.symbol;
     const sideMatch = filters.side === "ALL" || row.side === filters.side;
     return dateMatch && symbolMatch && sideMatch;
   });
 }
 
-function uniqueValues<T>(input: T[]): T[] {
-  return [...new Set(input)];
+function uniqueValues<T>(arr: T[]): T[] {
+  return [...new Set(arr)];
 }
+
+function tradeKey(t: ProAnalysisTrade) {
+  return `${t.ticket}-${t.opened_at}`;
+}
+
+// ─── Segment pills ─────────────────────────────────────────────────
+
+type Segment = "small" | "mid" | "large" | "scalping" | "intraday" | "swing";
+
+const SEGMENTS: { value: Segment; label: string }[] = [
+  { value: "small", label: "Small capital" },
+  { value: "mid", label: "Mid capital" },
+  { value: "large", label: "Large capital" },
+  { value: "scalping", label: "Scalping" },
+  { value: "intraday", label: "Intraday" },
+  { value: "swing", label: "Swing" },
+];
+
+// ─── Main component ────────────────────────────────────────────────
 
 export function ProAnalysisScreen() {
   const [filters, setFilters] = useState<ProAnalysisFilters>(DEFAULT_FILTERS);
-  const [capitalBucket, setCapitalBucket] = useState<"small" | "mid" | "large">("mid");
-  const [style, setStyle] = useState<"scalping" | "intraday" | "swing">("intraday");
-  const [selectedTradeKey, setSelectedTradeKey] = useState<string>("");
+  const [activeSegments, setActiveSegments] = useState<Set<Segment>>(new Set(["intraday"]));
+  const [selectedKey, setSelectedKey] = useState<string>("");
+  const [page, setPage] = useState(1);
   const { data, loading, error, refresh } = useProAnalysisTrades();
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  useEffect(() => { void refresh(); }, [refresh]);
 
   const trades = useMemo(() => data?.trades ?? [], [data]);
   const filteredTrades = useMemo(() => filterTrades(trades, filters), [filters, trades]);
+  const symbols = useMemo(() => uniqueValues(trades.map((t) => t.symbol)), [trades]);
+
+  const totalRows = filteredTrades.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * PAGE_SIZE;
+  const pageRows = filteredTrades.slice(pageStart, pageStart + PAGE_SIZE);
+
   const selectedTrade = useMemo(
     () =>
-      filteredTrades.find((trade) => `${trade.ticket}-${trade.opened_at}` === selectedTradeKey) ??
-      filteredTrades[0] ??
-      trades.find((trade) => `${trade.ticket}-${trade.opened_at}` === selectedTradeKey) ??
+      filteredTrades.find((t) => tradeKey(t) === selectedKey) ??
+      trades.find((t) => tradeKey(t) === selectedKey) ??
       null,
-    [filteredTrades, trades, selectedTradeKey]
+    [filteredTrades, trades, selectedKey]
   );
 
+  // Auto-select first row on load
   useEffect(() => {
-    if (selectedTrade) {
-      setSelectedTradeKey(`${selectedTrade.ticket}-${selectedTrade.opened_at}`);
+    if (!selectedKey && filteredTrades.length > 0) {
+      setSelectedKey(tradeKey(filteredTrades[0]));
     }
-  }, [selectedTrade]);
+  }, [filteredTrades, selectedKey]);
 
-  const columns: DataTableColumn<ProAnalysisTrade>[] = [
-    {
-      id: "ticket",
-      header: "Ticket",
-      sortable: true,
-      sortAccessor: (row) => row.ticket,
-      renderCell: (row) => row.ticket
-    },
-    {
-      id: "symbol",
-      header: "Symbol",
-      sortable: true,
-      sortAccessor: (row) => row.symbol,
-      renderCell: (row) => row.symbol
-    },
-    {
-      id: "side",
-      header: "Side",
-      sortable: true,
-      sortAccessor: (row) => row.side,
-      renderCell: (row) => <Badge variant={row.side === "LONG" ? "success" : "warning"}>{row.side}</Badge>
-    },
-    {
-      id: "volume",
-      header: "Volume",
-      sortable: true,
-      sortAccessor: (row) => row.volume,
-      renderCell: (row) => row.volume.toFixed(2)
-    },
-    {
-      id: "open_price",
-      header: "Open price",
-      sortable: true,
-      sortAccessor: (row) => row.open_price,
-      renderCell: (row) => formatPrice(row.open_price)
-    },
-    {
-      id: "close_price",
-      header: "Close price",
-      sortable: true,
-      sortAccessor: (row) => row.close_price ?? Number.NEGATIVE_INFINITY,
-      renderCell: (row) => (row.close_price == null ? "—" : formatPrice(row.close_price))
-    },
-    {
-      id: "profit",
-      header: "Profit",
-      sortable: true,
-      sortAccessor: (row) => row.profit,
-      renderCell: (row) => (
-        <span style={{ color: row.profit >= 0 ? "var(--ui-color-success)" : "var(--ui-color-warning)" }}>
-          {formatProfit(row.profit)}
-        </span>
-      )
-    },
-    {
-      id: "opened_at",
-      header: "Opened at",
-      sortable: true,
-      sortAccessor: (row) => row.opened_at,
-      renderCell: (row) => formatDateTime(row.opened_at)
-    },
-    {
-      id: "closed_at",
-      header: "Closed at",
-      sortable: true,
-      sortAccessor: (row) => row.closed_at ?? "",
-      renderCell: (row) => formatDateTime(row.closed_at)
-    },
-    {
-      id: "action",
-      header: "Action",
-      renderCell: (row) => (
-        <Button variant="neutral" onClick={() => setSelectedTradeKey(`${row.ticket}-${row.opened_at}`)}>
-          Inspect
-        </Button>
-      )
-    }
-  ];
+  const toggleSegment = (seg: Segment) => {
+    setActiveSegments((prev) => {
+      const next = new Set(prev);
+      if (next.has(seg)) { next.delete(seg); } else { next.add(seg); }
+      return next;
+    });
+  };
 
-  const symbols = uniqueValues(trades.map((trade) => trade.symbol));
+  const handleFilterChange = <K extends keyof ProAnalysisFilters>(key: K, val: ProAnalysisFilters[K]) => {
+    setFilters((f) => ({ ...f, [key]: val }));
+    setPage(1);
+  };
+
+  const sideDisplay = selectedTrade?.side ?? "—";
+  const sideBadgeKey = selectedTrade?.side === "LONG" ? "LONG" : "SHORT";
 
   return (
-    <section className={styles.page}>
-      <header className={styles.header}>
-        <Heading level={1}>Pro Analysis</Heading>
-        <Text tone="muted">Drilldown workspace for trade-level diagnostics and pattern detection.</Text>
-      </header>
+    <div className={styles.page}>
+      {/* Header */}
+      <div>
+        <h1 className={styles.pageTitle}>Pro Analysis</h1>
+        <p className={styles.pageSubtitle}>Drilldown avancé de vos trades avec filtres multi-segments.</p>
+      </div>
 
-      <FilterBar
-        title="FilterBar"
-        actions={
-          <Button variant="neutral" onClick={() => setFilters(DEFAULT_FILTERS)}>
-            Reset filters
-          </Button>
-        }
-      >
-        <label className="ui-filter-field">
-          <span className="ui-filter-label">Date range</span>
-          <select
-            className="ui-select"
-            value={filters.dateRange}
-            onChange={(event) => setFilters((prev) => ({ ...prev, dateRange: event.target.value }))}
-          >
-            <option value="Last 7 days">Last 7 days</option>
-            <option value="Last 30 days">Last 30 days</option>
-            <option value="Last 90 days">Last 90 days</option>
-          </select>
-        </label>
-
-        <label className="ui-filter-field">
-          <span className="ui-filter-label">Symbol</span>
-          <select
-            className="ui-select"
-            value={filters.symbol}
-            onChange={(event) => setFilters((prev) => ({ ...prev, symbol: event.target.value }))}
-          >
-            <option value="ALL">ALL</option>
-            {symbols.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="ui-filter-field">
-          <span className="ui-filter-label">Side</span>
-          <select
-            className="ui-select"
-            value={filters.side}
-            onChange={(event) =>
-              setFilters((prev) => ({ ...prev, side: event.target.value as ProAnalysisFilters["side"] }))
-            }
-          >
-            <option value="ALL">ALL</option>
-            <option value="LONG">LONG</option>
-            <option value="SHORT">SHORT</option>
-          </select>
-        </label>
-      </FilterBar>
-
-      <SegmentSelector
-        capitalBucket={capitalBucket}
-        style={style}
-        onCapitalBucketChange={setCapitalBucket}
-        onStyleChange={setStyle}
-      />
-
-      <section className={styles.mainGrid}>
-        <Card>
-          <Heading level={2}>Trades drilldown</Heading>
-          <Text tone="muted" size="sm" style={{ marginTop: 8 }}>
-            Raw MT5 trades with local filtering, sorting and pagination.
-          </Text>
-          <div style={{ marginTop: 12 }}>
-            {loading ? (
-              <div style={{ display: "grid", gap: 8 }}>
-                <Skeleton width="100%" height={42} />
-                <Skeleton width="100%" height={42} />
-                <Skeleton width="100%" height={42} />
-              </div>
-            ) : error ? (
-              <Text className="ui-text-error" size="sm">
-                {error}
-              </Text>
-            ) : (
-              <DataTable<ProAnalysisTrade>
-                columns={columns}
-                rows={filteredTrades}
-                rowKey={(row) => `${row.ticket}-${row.opened_at}`}
-                initialSort={{ columnId: "opened_at", direction: "desc" }}
-                pageSize={5}
-                emptyState={
-                  <div className={styles.emptyHint}>
-                    <Text tone="muted">No trade matches current filters.</Text>
-                  </div>
-                }
-              />
-            )}
+      {/* FilterBar */}
+      <div className={styles.filterBar}>
+        <div className={styles.filterBarLabel}>Filterbar</div>
+        <div className={styles.filterRow}>
+          <div className={styles.filterField}>
+            <label className={styles.filterLabel}>Date range</label>
+            <select
+              className={styles.filterSelect}
+              value={filters.dateRange}
+              onChange={(e) => handleFilterChange("dateRange", e.target.value)}
+            >
+              <option value="Last 7 days">Last 7 days</option>
+              <option value="Last 30 days">Last 30 days</option>
+              <option value="Last 90 days">Last 90 days</option>
+              <option value="All time">All time</option>
+            </select>
           </div>
-        </Card>
 
-        <div className={styles.panelsColumn}>
-          <Card>
-            <Heading level={2}>Trade side panel</Heading>
-            {loading ? (
-              <div style={{ display: "grid", gap: 8, marginTop: 12 }}>
-                <Skeleton width="100%" height={18} />
-                <Skeleton width="100%" height={18} />
-                <Skeleton width="100%" height={18} />
+          <div className={styles.filterField}>
+            <label className={styles.filterLabel}>Symbol</label>
+            <select
+              className={styles.filterSelect}
+              value={filters.symbol}
+              onChange={(e) => handleFilterChange("symbol", e.target.value)}
+            >
+              <option value="ALL">ALL</option>
+              {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+
+          <div className={styles.filterField}>
+            <label className={styles.filterLabel}>Side</label>
+            <select
+              className={styles.filterSelect}
+              value={filters.side}
+              onChange={(e) => handleFilterChange("side", e.target.value as ProAnalysisFilters["side"])}
+            >
+              <option value="ALL">ALL</option>
+              <option value="LONG">LONG</option>
+              <option value="SHORT">SHORT</option>
+            </select>
+          </div>
+
+          <button className={styles.resetBtn} onClick={() => { setFilters(DEFAULT_FILTERS); setPage(1); }}>
+            ⟳ Réinitialiser
+          </button>
+        </div>
+      </div>
+
+      {/* Segment selector */}
+      <div className={styles.segments}>
+        {SEGMENTS.map((seg) => (
+          <button
+            key={seg.value}
+            type="button"
+            className={styles.segPill}
+            data-active={activeSegments.has(seg.value)}
+            onClick={() => toggleSegment(seg.value)}
+          >
+            {seg.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Main grid */}
+      <div className={styles.mainGrid}>
+        {/* Trades drilldown */}
+        <div className={styles.drillCard}>
+          <div className={styles.drillHeader}>
+            <p className={styles.drillTitle}>Trades drilldown</p>
+            <p className={styles.drillSubtitle}>Raw MT5 trades with local filtering, sorting and pagination.</p>
+          </div>
+
+          {loading ? (
+            <div className={styles.skeletonRow}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className={styles.skeletonLine} style={{ width: `${70 + i * 5}%` }} />
+              ))}
+            </div>
+          ) : error ? (
+            <div className={styles.emptyHint}>{error}</div>
+          ) : filteredTrades.length === 0 ? (
+            <div className={styles.emptyHint}>Aucun trade ne correspond aux filtres actuels.</div>
+          ) : (
+            <>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Ticker</th>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th className={styles.right}>Volume</th>
+                    <th className={styles.right}>Open price</th>
+                    <th className={styles.right}>Close price</th>
+                    <th className={styles.right}>Profit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pageRows.map((row) => {
+                    const key = tradeKey(row);
+                        const normSide = row.side;
+                    return (
+                      <tr
+                        key={key}
+                        data-active={selectedKey === key}
+                        onClick={() => setSelectedKey(key)}
+                      >
+                        <td>{row.ticket}</td>
+                        <td>{row.symbol}</td>
+                        <td>
+                          <span className={styles.sideBadge} data-side={normSide}>{normSide}</span>
+                        </td>
+                        <td className={styles.right}>{row.volume.toFixed(2)}</td>
+                        <td className={styles.right}>{formatPrice(row.open_price)}</td>
+                        <td className={styles.right}>{row.close_price == null ? "—" : formatPrice(row.close_price)}</td>
+                        <td className={`${styles.right} ${row.profit >= 0 ? styles.profitPos : styles.profitNeg}`}>
+                          {formatProfit(row.profit)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+
+              <div className={styles.pagination}>
+                <span className={styles.paginationInfo}>
+                  Showing {PAGE_SIZE} of {totalRows} rows (page {safePage}/{totalPages})
+                </span>
+                <div className={styles.paginationBtns}>
+                  <button
+                    className={styles.pageBtn}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={safePage <= 1}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    className={`${styles.pageBtn} ${styles.pageBtnActive}`}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={safePage >= totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
-            ) : error ? (
-              <Text className="ui-text-error" size="sm" style={{ marginTop: 12 }}>
-                {error}
-              </Text>
-            ) : selectedTrade ? (
-              <div className={styles.tradeMeta} style={{ marginTop: 12 }}>
+            </>
+          )}
+        </div>
+
+        {/* Right panels */}
+        <div className={styles.panelsColumn}>
+          {/* Trade side panel */}
+          <div className={styles.sidePanel}>
+            <p className={styles.sidePanelTitle}>Trade side panel</p>
+
+            {loading ? (
+              <div className={styles.skeletonRow}>
+                {[1, 2, 3, 4].map((i) => <div key={i} className={styles.skeletonLine} />)}
+              </div>
+            ) : !selectedTrade ? (
+              <div className={styles.emptyPanel}>Sélectionne un trade dans le tableau.</div>
+            ) : (
+              <>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Ticket
-                  </Text>
-                  <Text size="sm">{selectedTrade.ticket}</Text>
+                  <span className={styles.kvLabel}>Ticket</span>
+                  <span className={styles.kvValue} style={{ fontWeight: 700, fontSize: "1.05rem" }}>
+                    {selectedTrade.ticket}
+                  </span>
                 </div>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Symbol
-                  </Text>
-                  <Text size="sm">{selectedTrade.symbol}</Text>
+                  <span className={styles.kvLabel}>Symbol</span>
+                  <span className={styles.kvValue} style={{ fontWeight: 700, fontSize: "1.05rem" }}>
+                    {selectedTrade.symbol}
+                  </span>
                 </div>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Side
-                  </Text>
-                  <Text size="sm">{selectedTrade.side}</Text>
+                  <span className={styles.kvLabel}>Side</span>
+                  <span className={styles.kvValue}>{sideDisplay}</span>
                 </div>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Open
-                  </Text>
-                  <Text size="sm">
+                  <span className={styles.kvLabel}>Open</span>
+                  <span className={styles.kvValue}>
                     {formatDateTime(selectedTrade.opened_at)} @ {formatPrice(selectedTrade.open_price)}
-                  </Text>
+                  </span>
                 </div>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Close
-                  </Text>
-                  <Text size="sm">
+                  <span className={styles.kvLabel}>Close</span>
+                  <span className={styles.kvValue}>
                     {formatDateTime(selectedTrade.closed_at)} @{" "}
                     {selectedTrade.close_price == null ? "—" : formatPrice(selectedTrade.close_price)}
-                  </Text>
+                  </span>
                 </div>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Profit
-                  </Text>
-                  <Text size="sm">{formatProfit(selectedTrade.profit)}</Text>
+                  <span className={styles.kvLabel}>Profit</span>
+                  <span
+                    className={`${styles.kvValueLarge} ${selectedTrade.profit >= 0 ? styles.profitPos : styles.profitNeg}`}
+                  >
+                    {formatProfit(selectedTrade.profit)}
+                  </span>
                 </div>
                 <div className={styles.kv}>
-                  <Text tone="muted" size="sm">
-                    Commission / Swap
-                  </Text>
-                  <Text size="sm">
+                  <span className={styles.kvLabel}>Commission / Swap</span>
+                  <span className={styles.kvValue}>
                     {selectedTrade.commission.toFixed(2)} / {selectedTrade.swap.toFixed(2)}
-                  </Text>
+                  </span>
                 </div>
-              </div>
-            ) : (
-              <Text tone="muted" style={{ marginTop: 12 }}>
-                Select a trade from the table to inspect details.
-              </Text>
-            )}
-          </Card>
 
-          <Card>
-            <Heading level={2}>Insights panel</Heading>
-            <Text tone="muted" size="sm" style={{ marginTop: 12 }}>
+                <div className={styles.sidePanelActions}>
+                  <span className={styles.sideBadge} data-side={sideBadgeKey} style={{ marginRight: "0.5rem" }}>
+                    {sideDisplay}
+                  </span>
+                  <button className={styles.aperçuBtn}>Aperçu</button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Insights panel */}
+          <div className={styles.insightsPanel}>
+            <p className={styles.insightsPanelTitle}>Insights panel</p>
+            <p className={styles.insightsPanelText}>
               Insights are available in the dashboard analytics modules.
-            </Text>
-          </Card>
+            </p>
+          </div>
         </div>
-      </section>
-    </section>
+      </div>
+    </div>
   );
 }

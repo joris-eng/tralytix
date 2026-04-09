@@ -6,14 +6,14 @@ import { usePlan } from "@/shared/auth/useSessionState";
 import { plans, plansFaq } from "@/features/plans/data";
 import type { BillingPeriod, PlanTier } from "@/features/plans/model";
 import { PricingCard } from "@/features/plans/ui/PricingCard";
-import { Card, Divider, Heading, Text } from "@/features/ui/primitives";
 import styles from "@/features/plans/ui/plans.module.css";
 
 export function PlansScreen() {
   const currentPlan = usePlan();
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("yearly");
   const [loadingTier, setLoadingTier] = useState<PlanTier | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [openFaq, setOpenFaq] = useState<string | null>(null);
 
   async function handleCheckout(tier: PlanTier) {
     setError(null);
@@ -23,11 +23,7 @@ export function PlansScreen() {
     if (!planData) return;
 
     const priceId =
-      billingPeriod === "yearly"
-        ? planData.yearlyPriceId
-        : planData.monthlyPriceId;
-
-    console.log("[plans] handleCheckout tier=%s period=%s priceId=%s", tier, billingPeriod, priceId);
+      billingPeriod === "yearly" ? planData.yearlyPriceId : planData.monthlyPriceId;
 
     if (!priceId) {
       setError(`Missing Stripe price ID for ${tier} plan.`);
@@ -36,23 +32,22 @@ export function PlansScreen() {
 
     try {
       setLoadingTier(tier);
-      console.log("[plans] calling billingCheckout with priceId=%s", priceId);
       const payload = await apiClient.billingCheckout(priceId);
-      console.log("[plans] checkout response:", payload);
       if (!payload.checkout_url) {
         setError("Checkout URL missing from billing response.");
         return;
       }
       window.location.href = payload.checkout_url;
     } catch (err) {
-      console.error("[plans] checkout error:", err);
       const isAbort =
         (err instanceof DOMException && err.name === "AbortError") ||
         (err instanceof Error && err.name === "AbortError");
       if (isAbort) {
         setError("La connexion a pris trop de temps. Réessaie dans quelques secondes.");
       } else {
-        setError(err instanceof Error ? err.message : "Impossible de démarrer le paiement. Réessaie.");
+        setError(
+          err instanceof Error ? err.message : "Impossible de démarrer le paiement. Réessaie."
+        );
       }
     } finally {
       setLoadingTier(null);
@@ -60,31 +55,36 @@ export function PlansScreen() {
   }
 
   return (
-    <section className={styles.page}>
+    <div className={styles.page}>
+      {/* Header */}
       <header className={styles.header}>
-        <Heading level={1}>Plans</Heading>
-        <Text tone="muted">Choisissez une expérience adaptée à votre niveau.</Text>
+        <h1 className={styles.pageTitle}>Plans</h1>
+        <p className={styles.pageSubtitle}>Choisissez une expérience adaptée à votre niveau.</p>
       </header>
 
-      {/* Billing period toggle */}
-      <div className={styles.billingToggle}>
-        <button
-          type="button"
-          className={billingPeriod === "monthly" ? styles.toggleActive : styles.toggleInactive}
-          onClick={() => setBillingPeriod("monthly")}
-        >
-          Mensuel
-        </button>
-        <button
-          type="button"
-          className={billingPeriod === "yearly" ? styles.toggleActive : styles.toggleInactive}
-          onClick={() => setBillingPeriod("yearly")}
-        >
-          Annuel <span className={styles.savingsBadge}>2 mois offerts</span>
-        </button>
+      {/* Billing toggle */}
+      <div className={styles.billingToggleWrap}>
+        <div className={styles.billingToggle}>
+          <button
+            type="button"
+            className={billingPeriod === "monthly" ? styles.toggleActive : styles.toggleInactive}
+            onClick={() => setBillingPeriod("monthly")}
+          >
+            Mensuel
+          </button>
+          <button
+            type="button"
+            className={billingPeriod === "yearly" ? styles.toggleActive : styles.toggleInactive}
+            onClick={() => setBillingPeriod("yearly")}
+          >
+            Annuel
+            <span className={styles.savingsBadge}>2 mois offerts</span>
+          </button>
+        </div>
       </div>
 
-      <section className={styles.comparisonGrid} aria-label="Plan comparison">
+      {/* Pricing cards */}
+      <div className={styles.grid}>
         {plans.map((item) => (
           <PricingCard
             key={item.tier}
@@ -96,28 +96,36 @@ export function PlansScreen() {
             onAction={() => void handleCheckout(item.tier)}
           />
         ))}
-      </section>
+      </div>
 
-      {error ? (
-        <Text className="ui-text-error" size="sm" style={{ textAlign: "center", marginTop: 16 }}>
-          {error}
-        </Text>
-      ) : null}
+      {/* Error */}
+      {error && <p className={styles.errorMsg}>{error}</p>}
 
-      <Card>
-        <Heading level={2}>FAQ</Heading>
-        <div className={styles.faqList} style={{ marginTop: 12 }}>
-          {plansFaq.map((item, index) => (
-            <div key={item.id} className={styles.faqItem}>
-              <Heading level={3}>{item.question}</Heading>
-              <Text tone="muted" size="sm">
-                {item.answer}
-              </Text>
-              {index < plansFaq.length - 1 ? <Divider style={{ marginTop: 8 }} /> : null}
+      {/* FAQ */}
+      <section className={styles.faqSection}>
+        <h2 className={styles.faqTitle}>Questions fréquentes</h2>
+        <div className={styles.faqList}>
+          {plansFaq.map((item) => (
+            <div
+              key={item.id}
+              className={[styles.faqItem, openFaq === item.id ? styles.faqItemOpen : ""]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <button
+                type="button"
+                className={styles.faqQuestion}
+                onClick={() => setOpenFaq(openFaq === item.id ? null : item.id)}
+                aria-expanded={openFaq === item.id}
+              >
+                <span>{item.question}</span>
+                <span className={styles.faqChevron}>{openFaq === item.id ? "−" : "+"}</span>
+              </button>
+              {openFaq === item.id && <p className={styles.faqAnswer}>{item.answer}</p>}
             </div>
           ))}
         </div>
-      </Card>
-    </section>
+      </section>
+    </div>
   );
 }
