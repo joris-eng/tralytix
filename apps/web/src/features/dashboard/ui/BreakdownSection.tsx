@@ -38,9 +38,14 @@ type BreakdownSectionProps = {
 
 export function BreakdownSection({ items }: BreakdownSectionProps) {
   return (
-    <section>
-      <Heading level={2}>Breakdown</Heading>
-      <div className={styles.breakdownGrid} style={{ marginTop: 12 }}>
+    <section className={styles.sectionBlock}>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionEyebrow}>Score decomposition</span>
+        <Heading level={2} className={styles.sectionTitle}>
+          Breakdown
+        </Heading>
+      </div>
+      <div className={styles.breakdownGrid}>
         {items.map((item) => (
           <BreakdownCard key={item.id} item={item} />
         ))}

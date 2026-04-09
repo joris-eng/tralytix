@@ -73,8 +73,13 @@ function ProHiddenPlaceholder() {
 
 export function TopLeaksSection({ mode, rows }: TopLeaksSectionProps) {
   return (
-    <section>
-      <Heading level={2}>Top leaks</Heading>
+    <section className={styles.sectionBlock}>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionEyebrow}>Leak monitoring</span>
+        <Heading level={2} className={styles.sectionTitle}>
+          Top leaks
+        </Heading>
+      </div>
       {mode === "pro" ? <TablePlaceholder rows={rows} /> : <ProHiddenPlaceholder />}
       <div className={styles.topLeaksFooter}>
         <Text size="sm" tone="subtle">

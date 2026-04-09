@@ -38,9 +38,14 @@ type InsightCardsSectionProps = {
 
 export function InsightCardsSection({ items }: InsightCardsSectionProps) {
   return (
-    <section>
-      <Heading level={2}>Insights</Heading>
-      <div className={styles.insightsGrid} style={{ marginTop: 12 }}>
+    <section className={styles.sectionBlock}>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionEyebrow}>AI insight layer</span>
+        <Heading level={2} className={styles.sectionTitle}>
+          Insights
+        </Heading>
+      </div>
+      <div className={styles.insightsGrid}>
         {items.map((item) => (
           <InsightCard key={item.id} item={item} />
         ))}

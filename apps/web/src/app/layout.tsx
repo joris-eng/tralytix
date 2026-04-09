@@ -1,17 +1,16 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { AuthNavLinks } from "@/features/auth/ui/AuthNavLinks";
-import { LogoutButton } from "@/features/auth/ui/LogoutButton";
 import { AuthSessionProvider } from "@/shared/auth/AuthSessionProvider";
-import { NotificationBell } from "@/shared/notifications/NotificationBell";
+import { LanguageProvider } from "@/shared/contexts/LanguageContext";
+import AppShell from "@/shared/components/AppShell";
 
 export const metadata: Metadata = {
   title: "Tralytix",
-  description: "Precision trading analytics terminal"
+  description: "Precision trading analytics terminal",
 };
 
 export default function RootLayout({
-  children
+  children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
@@ -25,23 +24,9 @@ export default function RootLayout({
       </head>
       <body>
         <AuthSessionProvider>
-          <div className="app-shell">
-            <nav className="app-nav">
-              <div className="app-nav-logo">
-                TRALYTIX<span className="app-nav-dot">.</span>
-              </div>
-              <div className="app-nav-links">
-                <AuthNavLinks />
-              </div>
-              <div className="app-nav-actions">
-                <NotificationBell />
-                <LogoutButton />
-              </div>
-            </nav>
-            <main className="app-main">
-              {children}
-            </main>
-          </div>
+          <LanguageProvider>
+            <AppShell>{children}</AppShell>
+          </LanguageProvider>
         </AuthSessionProvider>
       </body>
     </html>
