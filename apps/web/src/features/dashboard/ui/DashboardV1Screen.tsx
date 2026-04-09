@@ -212,7 +212,7 @@ export function DashboardV1Screen() {
       </RequirePro>
 
       {mode === "pro" ? (
-        <Card>
+        <Card className={styles.advancedFiltersCard}>
           <Heading level={3}>Advanced Filters</Heading>
           <Text tone="muted" size="sm" style={{ marginTop: 8 }}>
             Placeholder controls for portfolio, setup class, volatility regime and session clusters.

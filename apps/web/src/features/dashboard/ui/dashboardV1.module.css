@@ -1,6 +1,40 @@
 .page {
   display: grid;
-  gap: var(--ui-space-5);
+  gap: var(--ui-space-6);
+  max-width: 1180px;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.sectionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.sectionEyebrow {
+  font-family: var(--ui-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-color-primary);
+  opacity: 0.9;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-family: var(--ui-font-family);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ui-color-text);
+  line-height: 1.2;
 }
 
 .header {
@@ -93,12 +127,19 @@
 
 /* Compact insight card (replaces Card primitive for tighter layout) */
 .insightCard {
-  background: var(--ui-color-surface);
+  background: linear-gradient(145deg, rgba(0, 212, 255, 0.04) 0%, var(--ui-color-surface) 48%);
   border: 1px solid var(--ui-color-border);
+  border-left: 2px solid rgba(0, 212, 255, 0.35);
   border-radius: var(--ui-radius-md);
   padding: var(--ui-space-3) var(--ui-space-4);
   display: flex;
   flex-direction: column;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.insightCard:hover {
+  border-color: rgba(0, 212, 255, 0.2);
+  background: linear-gradient(145deg, rgba(0, 212, 255, 0.07) 0%, var(--ui-color-surface-elevated) 50%);
 }
 
 .insightHeader {
@@ -206,6 +247,11 @@
   border-radius: var(--ui-radius-sm);
   padding: var(--ui-space-4);
   margin-top: var(--ui-space-3);
+}
+
+.advancedFiltersCard {
+  border-color: rgba(0, 212, 255, 0.12);
+  background: linear-gradient(180deg, rgba(0, 212, 255, 0.03) 0%, var(--ui-color-surface) 100%);
 }
 
 .advancedFilters {
