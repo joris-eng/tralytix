@@ -2,9 +2,106 @@
 
 import { useMemo, useState } from "react";
 import type { TradeWithReview } from "@/features/revision/model/types";
-import { useRevisionList } from "@/features/revision/hooks/useRevision";
+import { useLanguage } from "@/shared/contexts/LanguageContext";
 import { ReviewModal } from "@/features/revision/ui/ReviewModal";
 import styles from "@/features/revision/ui/revision.module.css";
+
+const MOCK_TRADES: TradeWithReview[] = [
+  {
+    trade_id: 1,
+    symbol: "EUR/USD",
+    side: "BUY",
+    profit: 85,
+    entry_price: 1.085,
+    close_price: 1.0935,
+    opened_at: "2024-01-15T09:30:00Z",
+    closed_at: "2024-01-15T14:30:00Z",
+    review: {
+      id: "r1",
+      trade_id: 1,
+      rating: 4,
+      setup_tag: "Breakout retest",
+      notes: "Belle exécution, bonne gestion du risque.",
+      key_learnings: [
+        "Patience payante sur le retest",
+        "SL bien placé sous le support",
+      ],
+      reviewed_at: "2024-01-15T18:00:00Z",
+    },
+  },
+  {
+    trade_id: 2,
+    symbol: "GBP/JPY",
+    side: "SELL",
+    profit: -42,
+    entry_price: 188.45,
+    close_price: 188.87,
+    opened_at: "2024-01-14T10:00:00Z",
+    closed_at: "2024-01-14T16:00:00Z",
+    review: {
+      id: "r2",
+      trade_id: 2,
+      rating: 2,
+      setup_tag: "Reversal",
+      notes: "Entrée précipitée sans attendre la confirmation.",
+      key_learnings: [
+        "Ne pas anticiper les reversals sans signal clair",
+      ],
+      reviewed_at: "2024-01-14T20:00:00Z",
+    },
+  },
+  {
+    trade_id: 3,
+    symbol: "USD/CHF",
+    side: "BUY",
+    profit: 120,
+    entry_price: 0.872,
+    close_price: 0.884,
+    opened_at: "2024-01-13T08:00:00Z",
+    closed_at: "2024-01-13T18:00:00Z",
+    review: {
+      id: "r3",
+      trade_id: 3,
+      rating: 5,
+      setup_tag: "Trend continuation",
+      notes: "Setup parfait avec confluence de facteurs techniques.",
+      key_learnings: [
+        "La confluence augmente significativement le taux de réussite",
+        "Laisser courir les gagnants en tendance",
+      ],
+      reviewed_at: "2024-01-13T22:00:00Z",
+    },
+  },
+  {
+    trade_id: 4,
+    symbol: "AUD/USD",
+    side: "BUY",
+    profit: 35,
+    entry_price: 0.6545,
+    close_price: 0.658,
+    opened_at: "2024-01-12T01:00:00Z",
+    closed_at: "2024-01-12T12:00:00Z",
+    review: null,
+  },
+  {
+    trade_id: 5,
+    symbol: "EUR/GBP",
+    side: "SELL",
+    profit: -18,
+    entry_price: 0.8612,
+    close_price: 0.863,
+    opened_at: "2024-01-11T07:00:00Z",
+    closed_at: "2024-01-11T15:00:00Z",
+    review: null,
+  },
+];
+
+const MOCK_STATS = {
+  reviewed: 3,
+  pending: 2,
+  avg_rating: 3.7,
+  total_insights: 5,
+};
 
 function fmtPnl(n: number): string {
   const sign = n >= 0 ? "+" : "";
@@ -47,7 +144,9 @@ function TradeReviewCard({
         <div className={styles.tradeInfo}>
           <div className={styles.tradeTopRow}>
             <span className={styles.tradePair}>{trade.symbol}</span>
-            <span className={styles.sideTag} data-side={trade.side}>{sideLabel}</span>
+            <span className={styles.sideTag} data-side={trade.side}>
+              {sideLabel}
+            </span>
             {trade.review?.setup_tag && (
               <span className={styles.setupTag}>{trade.review.setup_tag}</span>
             )}
@@ -58,7 +157,9 @@ function TradeReviewCard({
             )}
           </div>
           <div className={styles.tradeMeta}>
-            📅 {fmtDate(trade.closed_at)} · Entry: {trade.entry_price.toFixed(4)} · Exit: {trade.close_price.toFixed(4)}
+            📅 {fmtDate(trade.closed_at)} · Entry:{" "}
+            {trade.entry_price.toFixed(4)} · Exit:{" "}
+            {trade.close_price.toFixed(4)}
           </div>
         </div>
 
@@ -83,7 +184,8 @@ function TradeReviewCard({
       </div>
 
       {/* Expanded: notes + key learnings */}
-      {(trade.review?.notes || (trade.review?.key_learnings?.length ?? 0) > 0) && (
+      {(trade.review?.notes ||
+        (trade.review?.key_learnings?.length ?? 0) > 0) && (
         <div className={styles.tradeExpanded}>
           {trade.review?.notes && (
             <div className={styles.notesRow}>
@@ -107,7 +209,10 @@ function TradeReviewCard({
           )}
 
           <div className={styles.expandedActions}>
-            <button className={styles.aperçuBtn} onClick={() => onReview(trade)}>
+            <button
+              className={styles.aperçuBtn}
+              onClick={() => onReview(trade)}
+            >
               Aperçu
             </button>
           </div>
@@ -115,10 +220,16 @@ function TradeReviewCard({
       )}
 
       {/* If not reviewed yet, show the "Aperçu" button */}
-      {!trade.review?.notes && !(trade.review?.key_learnings?.length) && (
-        <div className={styles.tradeExpanded} style={{ paddingTop: "0.6rem", paddingBottom: "0.8rem" }}>
+      {!trade.review?.notes && !trade.review?.key_learnings?.length && (
+        <div
+          className={styles.tradeExpanded}
+          style={{ paddingTop: "0.6rem", paddingBottom: "0.8rem" }}
+        >
           <div className={styles.expandedActions}>
-            <button className={styles.aperçuBtn} onClick={() => onReview(trade)}>
+            <button
+              className={styles.aperçuBtn}
+              onClick={() => onReview(trade)}
+            >
               {trade.review ? "Aperçu" : "+ Réviser"}
             </button>
           </div>
@@ -130,21 +241,20 @@ function TradeReviewCard({
 
 // ─── Main screen ───────────────────────────────────────────────────
 
-export function RevisionScreen() {
-  const { trades, stats, loading, error, refresh } = useRevisionList();
+export default function RevisionScreen() {
+  useLanguage();
+
+  const trades = MOCK_TRADES;
+  const stats = MOCK_STATS;
   const [modalTrade, setModalTrade] = useState<TradeWithReview | null>(null);
 
-  // Optimistic update after save
-  const handleSaved = async () => {
-    await refresh();
+  const handleSaved = () => {
+    setModalTrade(null);
   };
 
-  const avgRatingDisplay = stats
-    ? `${stats.avg_rating.toFixed(1)}/5`
-    : "—";
+  const avgRatingDisplay = `${stats.avg_rating.toFixed(1)}/5`;
 
   const sorted = useMemo(() => {
-    // reviewed trades first, then pending
     return [...trades].sort((a, b) => {
       const aRev = a.review?.rating ? 1 : 0;
       const bRev = b.review?.rating ? 1 : 0;
@@ -157,7 +267,9 @@ export function RevisionScreen() {
       {/* Header */}
       <div>
         <h1 className={styles.pageTitle}>Révision des Trades</h1>
-        <p className={styles.pageSubtitle}>Revoyez et apprenez de chaque trade</p>
+        <p className={styles.pageSubtitle}>
+          Revoyez et apprenez de chaque trade
+        </p>
       </div>
 
       {/* KPI cards */}
@@ -165,25 +277,25 @@ export function RevisionScreen() {
         <div className={styles.statCard} data-color="green">
           <div className={styles.statIcon}>✓</div>
           <div className={styles.statLabel}>Révisés</div>
-          <div className={styles.statValue}>{stats?.reviewed ?? "—"}</div>
+          <div className={styles.statValue}>{stats.reviewed}</div>
           <div className={styles.statSub}>trades</div>
         </div>
         <div className={styles.statCard} data-color="amber">
           <div className={styles.statIcon}>⏳</div>
           <div className={styles.statLabel}>En attente</div>
-          <div className={styles.statValue}>{stats?.pending ?? "—"}</div>
+          <div className={styles.statValue}>{stats.pending}</div>
           <div className={styles.statSub}>trades</div>
         </div>
         <div className={styles.statCard} data-color="cyan">
           <div className={styles.statIcon}>◎</div>
           <div className={styles.statLabel}>Note Moy</div>
-          <div className={styles.statValue}>{stats ? avgRatingDisplay : "—"}</div>
+          <div className={styles.statValue}>{avgRatingDisplay}</div>
           <div className={styles.statSub}>qualité d&apos;exécution</div>
         </div>
         <div className={styles.statCard} data-color="navy">
           <div className={styles.statIcon}>💡</div>
           <div className={styles.statLabel}>Insights</div>
-          <div className={styles.statValue}>{stats?.total_insights ?? "—"}</div>
+          <div className={styles.statValue}>{stats.total_insights}</div>
           <div className={styles.statSub}>améliorations notées</div>
         </div>
       </div>
@@ -191,13 +303,16 @@ export function RevisionScreen() {
       {/* Trades list */}
       <h2 className={styles.sectionTitle}>Trades Récents</h2>
 
-      {error && <p style={{ color: "#ff4466" }}>{error}</p>}
-
-      {loading ? (
-        <p style={{ color: "var(--ui-color-muted)" }}>Chargement…</p>
-      ) : trades.length === 0 ? (
-        <p style={{ color: "var(--ui-color-muted)", textAlign: "center", padding: "3rem" }}>
-          Aucun trade importé. Importe tes trades MT5 pour commencer la révision.
+      {trades.length === 0 ? (
+        <p
+          style={{
+            color: "var(--ui-color-muted)",
+            textAlign: "center",
+            padding: "3rem",
+          }}
+        >
+          Aucun trade importé. Importe tes trades MT5 pour commencer la
+          révision.
         </p>
       ) : (
         <div className={styles.tradeList}>

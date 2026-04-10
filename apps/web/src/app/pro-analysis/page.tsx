@@ -1,10 +1,5 @@
-import { ProAnalysisScreen } from "@/features/pro-analysis/ui/ProAnalysisScreen";
-import { RequirePro } from "@/shared/auth/RequirePro";
+import ProAnalysisScreen from "@/features/analysis/ui/ProAnalysisScreen";
 
 export default function ProAnalysisPage() {
-  return (
-    <RequirePro>
-      <ProAnalysisScreen />
-    </RequirePro>
-  );
+  return <ProAnalysisScreen />;
 }
